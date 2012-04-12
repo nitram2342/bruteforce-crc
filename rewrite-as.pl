@@ -29,6 +29,7 @@ my $verbose = 0;
 
 if(not defined($file) or not( -f $file)) {
     print "$0 [bits|hexbytes] <filename>\n";
+    exit(1);
 }
 
 # parse messages
