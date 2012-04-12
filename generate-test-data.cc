@@ -6,6 +6,7 @@
  */
 #include <iostream>
 #include <string>
+#include <boost/dynamic_bitset.hpp>
 #include <boost/program_options.hpp>
 #include "crc.hpp"
 
