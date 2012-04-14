@@ -294,8 +294,8 @@ message_list_t read_file(std::string const& file) {
 
 int main(int argc, char *argv[]) {
 
-  size_t width = 16, offs_crc = 91;
-  size_t start = 7;
+  size_t width = 16, offs_crc = 80;
+  size_t start = 0;
   size_t end = offs_crc;
   fast_int_t final_xor = 0;
   bool ref_in = false, ref_out = false;
