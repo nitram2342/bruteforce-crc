@@ -31,7 +31,7 @@ public:
   typedef uint32_t value_type;
 
   // Constructor
-  explicit my_crc_basic(uint width,
+  explicit my_crc_basic(unsigned int width,
 			value_type truncated_polynominal = 0,
 			value_type initial_remainder = 0, 
 			value_type final_xor_value = 0,
@@ -58,7 +58,7 @@ public:
 
 private:
   // Member data
-  uint width_;
+  unsigned int width_;
   value_type rem_;
   value_type poly_, init_, final_;  // non-const to allow assignability
   bool rft_in_, rft_out_;     // non-const to allow assignability
@@ -71,7 +71,7 @@ private:
 
 //  Simple CRC class function definitions  -----------------------------------//
 
-my_crc_basic::my_crc_basic( uint width,
+my_crc_basic::my_crc_basic( unsigned int width,
 			    my_crc_basic::value_type  truncated_polynominal,
 			    my_crc_basic::value_type  initial_remainder,      // = 0
 			    my_crc_basic::value_type  final_xor_value,        // = 0
