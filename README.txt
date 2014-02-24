@@ -9,6 +9,16 @@ Licence
 This code is published under the Boost Software Licence.
 http://www.boost.org/users/license.html
 
+Dependencies
+-------------
+
+- Cmake
+- Boost
+  - boost_program_options
+  - boost_system
+  - boost_regex
+  - boost_thread
+
 Compile
 --------
 
