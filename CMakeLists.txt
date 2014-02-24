@@ -11,7 +11,7 @@ find_package(PkgConfig)
 #set(Boost_USE_STATIC_LIBS   ON)
 set(Boost_USE_MULTITHREADED ON)
 
-find_package(Boost REQUIRED COMPONENTS program_options-mt system-mt regex-mt thread-mt)
+find_package(Boost REQUIRED COMPONENTS program_options system regex thread)
 if(Boost_FOUND)
         include_directories(${Boost_INCLUDE_DIRS})
         set(LIBS ${LIBS} ${Boost_LIBRARIES}) 	
