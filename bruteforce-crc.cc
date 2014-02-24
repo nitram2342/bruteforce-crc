@@ -22,7 +22,7 @@
 #include "crc.hpp"
 #include "ThreadPool.h"
 
-#define MAX_VALUE(width) ((1 << width) - 1)
+#define MAX_VALUE(width) (uint32_t)((1 << width) - 1)
 
 namespace po = boost::program_options;
 
@@ -298,6 +298,8 @@ int main(int argc, char *argv[]) {
   size_t start = 0;
   size_t end = offs_crc;
   fast_int_t final_xor = 0;
+
+  fast_int_t poly = 0, start_poly = 0, end_poly;
   bool ref_in = false, ref_out = false;
   bool probe_final_xor = false;
   bool probe_reflections = false;
@@ -313,6 +315,7 @@ int main(int argc, char *argv[]) {
     ("start", po::value<size_t>(), "calculate CRC from this offset")
     ("end", po::value<size_t>(), "calculate CRC up to this offset (not included)")
     ("final-xor", po::value<fast_int_t>(), "final xor (default: 0)")
+    ("poly", po::value<fast_int_t>(), "truncated poly (default: bruteforced)")
     ("reflect-in", po::value<bool>(), "reflect input (default: false)")
     ("reflect-out", po::value<bool>(), "reflect remainder output (default: false)")
     ("probe-reflections", po::value<bool>(), "check reflections for input and output (default: false)")
@@ -336,6 +339,7 @@ int main(int argc, char *argv[]) {
   if(vm.count("start")) start = vm["start"].as<size_t>();
   if(vm.count("end")) end = vm["end"].as<size_t>();
   if(vm.count("final-xor")) final_xor = vm["final-xor"].as<fast_int_t>();
+  if(vm.count("poly")) poly = vm["poly"].as<fast_int_t>();
   if(vm.count("reflect-in")) ref_in = vm["reflect-in"].as<bool>();
   if(vm.count("reflect-out")) ref_out = vm["reflect-out"].as<bool>();
   if(vm.count("probe-final-xor")) probe_final_xor = vm["probe-final-xor"].as<bool>();
@@ -351,6 +355,10 @@ int main(int argc, char *argv[]) {
     msg_list = read_file(vm["file"].as<std::string>());
   }
   
+
+  start_poly = poly > 0 ? poly : 0x0000;
+  end_poly = (poly > 0 ? poly : MAX_VALUE(width));
+
   // print parameter
   std::cout << "number of threads        : " << num_threads << "\n"
 	    << "width                    : " << width << " bits\n"
@@ -360,7 +368,7 @@ int main(int argc, char *argv[]) {
 	    << "reflect in               : " << bool_to_str(ref_in) << "\n"
 	    << "reflect out              : " << bool_to_str(ref_out) << "\n"
 	    << "\n"
-	    << "truncated polynom        : from 0 to " << MAX_VALUE(width) << " (MSB not shown)\n"
+	    << "truncated polynom        : from " << start_poly << " to " << end_poly << " (MSB not shown)\n"
 	    << "initial value            : from 0 to " << MAX_VALUE(width) << "\n"
 	    << "probe reflections        : " << bool_to_str(probe_reflections) << "\n"
 	    << "probe final xor          : " << bool_to_str(probe_final_xor) << "\n"
@@ -371,7 +379,7 @@ int main(int argc, char *argv[]) {
   extract_expected_crcs_from_messages(expected_crcs, msg_list, offs_crc, width);
 
   // calculate number of crc calculations
-  crc_steps = 1+MAX_VALUE(width); // number of polys
+  crc_steps = poly > 0 ? 1 : 1+MAX_VALUE(width); // number of polys
   crc_steps *= 1+MAX_VALUE(width); // number of inits
   if(probe_reflections) crc_steps *= 4;
   if(probe_final_xor) crc_steps *= 1+MAX_VALUE(width);
@@ -380,7 +388,7 @@ int main(int argc, char *argv[]) {
   gettimeofday(&current_time, NULL);
 
   ThreadPool<boost::function0<void> > pool;
-  int poly_step = MAX_VALUE(width)/num_threads;
+  int poly_step = poly > 0 ? 1 : MAX_VALUE(width)/num_threads;
 
   for(int probe_ref_in = probe_reflections ? 0 : bool_to_int(ref_in); 
       probe_ref_in <= probe_reflections ? 1 : bool_to_int(ref_in); 
@@ -391,17 +399,19 @@ int main(int argc, char *argv[]) {
 	probe_ref_out++) {
 
 
-
-      for(uint32_t poly = 0x0000; poly <= MAX_VALUE(width); poly += poly_step) {
+      for(uint32_t _poly = start_poly; 
+	  _poly <= end_poly; 
+	  _poly += poly_step) {
 	
-	struct bruteforce_params p(width, poly, poly + poly_step, 
+	struct bruteforce_params p(width, _poly, _poly + poly_step, 
 				   final_xor, 
 				   int_to_bool(probe_ref_in), int_to_bool(probe_ref_out),
 				   start, end, msg_list, expected_crcs,
 				   probe_final_xor);
-    
+	
 	pool.add(boost::bind(&brute_force, p));
       }
+      
     }
   }
 
