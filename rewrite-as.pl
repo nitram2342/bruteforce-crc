@@ -19,7 +19,6 @@
 #
 
 use strict;
-use Digest::CRC;
 use Data::Dumper;
 use POSIX;
 
