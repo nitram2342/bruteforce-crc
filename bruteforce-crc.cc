@@ -302,7 +302,6 @@ int main(int argc, char *argv[]) {
   fast_int_t poly = 0, start_poly = 0, end_poly;
   bool ref_in = false, ref_out = false;
   bool probe_final_xor = false;
-  bool probe_reflections = false;
 
   // definition of program options
   po::options_description desc("Allowed options");
@@ -318,7 +317,6 @@ int main(int argc, char *argv[]) {
     ("poly", po::value<fast_int_t>(), "truncated poly (default: bruteforced)")
     ("reflect-in", po::value<bool>(), "reflect input (default: false)")
     ("reflect-out", po::value<bool>(), "reflect remainder output (default: false)")
-    ("probe-reflections", po::value<bool>(), "check reflections for input and output (default: false)")
     ("probe-final-xor", po::value<bool>(), "bruteforce the final-xor, too (default: false)")
     ;
 
@@ -343,7 +341,6 @@ int main(int argc, char *argv[]) {
   if(vm.count("reflect-in")) ref_in = vm["reflect-in"].as<bool>();
   if(vm.count("reflect-out")) ref_out = vm["reflect-out"].as<bool>();
   if(vm.count("probe-final-xor")) probe_final_xor = vm["probe-final-xor"].as<bool>();
-  if(vm.count("probe-reflections")) probe_reflections = vm["probe-reflections"].as<bool>();
 
   // check parameters
 
@@ -365,13 +362,11 @@ int main(int argc, char *argv[]) {
 	    << "CRC's offset             : " << offs_crc << "\n"
 	    << "calc CRC for bit offsets : " << start << " .. " << end << " (not included)\n"
 	    << "final XOR                : " << final_xor << "\n"
-	    << "reflect in               : " << bool_to_str(ref_in) << "\n"
-	    << "reflect out              : " << bool_to_str(ref_out) << "\n"
-	    << "\n"
 	    << "truncated polynom        : from " << start_poly << " to " << end_poly << " (MSB not shown)\n"
 	    << "initial value            : from 0 to " << MAX_VALUE(width) << "\n"
-	    << "probe reflections        : " << bool_to_str(probe_reflections) << "\n"
 	    << "probe final xor          : " << bool_to_str(probe_final_xor) << "\n"
+	    << "probe reflect in         : " << bool_to_str(ref_in) << "\n"
+	    << "probe reflect out        : " << bool_to_str(ref_out) << "\n"
 	    << "\n";
   
 
@@ -381,23 +376,25 @@ int main(int argc, char *argv[]) {
   // calculate number of crc calculations
   crc_steps = poly > 0 ? 1 : 1+MAX_VALUE(width); // number of polys
   crc_steps *= 1+MAX_VALUE(width); // number of inits
-  if(probe_reflections) crc_steps *= 4;
+  if(ref_in) crc_steps *= 2;
+  if(ref_out) crc_steps *= 2;
   if(probe_final_xor) crc_steps *= 1+MAX_VALUE(width);
 
   gettimeofday(&start_time, NULL);
   gettimeofday(&current_time, NULL);
 
+
+  if(((end-start) % 8 != 0) || (end - start == 0)) {
+    std::cout << "input reflection only works if range start ... end is N * 8 bit with N > 0\n"; 
+    exit(1);
+  }
+
   ThreadPool<boost::function0<void> > pool;
   int poly_step = poly > 0 ? 1 : MAX_VALUE(width)/num_threads;
 
-  for(int probe_ref_in = probe_reflections ? 0 : bool_to_int(ref_in); 
-      probe_ref_in <= probe_reflections ? 1 : bool_to_int(ref_in); 
-      probe_ref_in++) {
+  for(int probe_ref_in = 0; probe_ref_in <= bool_to_int(ref_in); probe_ref_in++) {
 
-    for(int probe_ref_out = probe_reflections ? 0 : bool_to_int(ref_out); 
-	probe_ref_out <= probe_reflections ? 1 : bool_to_int(ref_out); 
-	probe_ref_out++) {
-
+    for(int probe_ref_out = 0; probe_ref_out <= bool_to_int(ref_out); probe_ref_out++) {
 
       for(uint32_t _poly = start_poly; 
 	  _poly <= end_poly; 
@@ -410,6 +407,7 @@ int main(int argc, char *argv[]) {
 				   probe_final_xor);
 	
 	pool.add(boost::bind(&brute_force, p));
+	//std::cout << "XXXX\n";
       }
       
     }

@@ -139,10 +139,26 @@ bool my_crc_basic::calc_crc(value_type const use_initial,
   
   reset(use_initial);	
   
-  for(size_t i = offs_start; i < offs_end; i++) {
-    process_bit(msg[i]);
+  if(rft_in_) {
+    // iterate over bytes
+    for(size_t i = offs_start; i < offs_end; i+=8) {
+      
+      // inverse feeding
+      for(int j = 1; j <= 8; j++)
+	process_bit(msg[i + 8 - j]);
+
+    }
   }
+  else {
+
+    // normal operation
+    for(size_t i = offs_start; i < offs_end; i++) {
+      process_bit(msg[i]);
+    }
+  }
+
   return checksum() == expected_crc;
+  
 }
 
 
