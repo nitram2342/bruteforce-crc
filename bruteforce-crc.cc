@@ -145,12 +145,12 @@ void print_stats() {
 
     if(elapsed_ms > 0) {
       uint64_t crcs_per_sec = (1000*crc_counter/elapsed_ms);
-      std::cout << "time=" << (elapsed_ms/1000) << " s "
-		<< "CRCs/second=" <<  crcs_per_sec
+      std::cout << "\rtime=" << (elapsed_ms/1000) << "s "
+		<< "CRCs/s=" <<  crcs_per_sec
 		<< " done=" << (crc_counter*100.0/crc_steps) << "%"
-		<< " (" << number_to_str(crc_counter) << " of " << number_to_str(crc_steps) << ") "
-		<< " time_to_go=" <<  (crc_steps - crc_counter)/crcs_per_sec/60 << " min"
-		<< "\n";
+		<< " (" << number_to_str(crc_counter) << " of " << number_to_str(crc_steps) << ")"
+		<< " time_to_go=" <<  (crc_steps - crc_counter)/crcs_per_sec/3600 << " h"
+		<< "     ";
     }
   }
 
@@ -187,7 +187,7 @@ bool brute_force(struct bruteforce_params p) {
       
       boost::mutex::scoped_lock mylock(mymutex);
       crc_counter += MAX_VALUE(p._width);
-      if(p._probe_final_xor || (poly % 0x100 == 0))
+      if(p._probe_final_xor || (poly % 0x80 == 0))
 	print_stats();
     }
   }
@@ -415,7 +415,7 @@ int main(int argc, char *argv[]) {
 
   pool.wait();
 
-  std::cout << "No model found.\n";
+  std::cout << "\nNo model found.\n";
 
   return 0;
 }
