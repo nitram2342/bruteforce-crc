@@ -6,12 +6,16 @@ add_definitions(-Wall -O3 -ggdb)
 # enable compiler output:
 set(CMAKE_VERBOSE_MAKEFILE true)
 
+#Setup CMake to run tests
+enable_testing()
+
 # Boost
 find_package(PkgConfig)
+
 #set(Boost_USE_STATIC_LIBS   ON)
 set(Boost_USE_MULTITHREADED ON)
 
-find_package(Boost REQUIRED COMPONENTS program_options system regex thread)
+find_package(Boost REQUIRED COMPONENTS program_options system regex thread unit_test_framework)
 if(Boost_FOUND)
         include_directories(${Boost_INCLUDE_DIRS})
         set(LIBS ${LIBS} ${Boost_LIBRARIES}) 	
@@ -26,3 +30,30 @@ target_link_libraries(bruteforce-crc ${LIBS})
 set(GENERATE_TEST_DATA_CMD generate-test-data.cc)
 add_executable(generate-test-data ${GENERATE_TEST_DATA_CMD})
 target_link_libraries(generate-test-data ${LIBS})
+
+# To process brute forcer stolen from http://neyasystems.com/an-engineers-guide-to-unit-testing-cmake-and-boost-unit-tests/
+file(GLOB TEST_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} tests/*.cc)
+
+#Run through each source
+foreach(testSrc ${TEST_SRCS})
+
+        #Extract the filename without an extension (NAME_WE)
+        get_filename_component(testName ${testSrc} NAME_WE)
+
+        #Add compile target
+        add_executable(${testName} ${testSrc})
+
+        #link to Boost libraries AND your targets and dependencies
+        target_link_libraries(${testName} ${Boost_LIBRARIES} ${LIBS})
+
+        #I like to move testing binaries into a testBin directory
+        set_target_properties(${testName} PROPERTIES 
+            RUNTIME_OUTPUT_DIRECTORY  ${CMAKE_CURRENT_SOURCE_DIR}/bin)
+
+        #Finally add it to test execution - 
+        #Notice the WORKING_DIRECTORY and COMMAND
+        add_test(NAME ${testName} 
+                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/bin
+                 COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/bin/${testName} )
+
+endforeach(testSrc)

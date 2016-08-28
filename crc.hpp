@@ -137,28 +137,33 @@ bool my_crc_basic::calc_crc(value_type const use_initial,
 			    size_t offs_end,
 			    value_type const expected_crc) {
   
-  reset(use_initial);	
-  
-  if(rft_in_) {
-    // iterate over bytes
-    for(size_t i = offs_start; i < offs_end; i+=8) {
-      
-      // inverse feeding
-      for(int j = 1; j <= 8; j++)
-	process_bit(msg[i + 8 - j]);
+	reset(use_initial);	
 
-    }
-  }
-  else {
+	// Data should really fit in the message...
+	assert(msg.size() <= offs_start + offs_end);
 
-    // normal operation
-    for(size_t i = offs_start; i < offs_end; i++) {
-      process_bit(msg[i]);
-    }
-  }
+	if(rft_in_) {
 
-  return checksum() == expected_crc;
-  
+		for(size_t i = offs_start; i < offs_end; i+=8) {
+			
+			// inverse feeding
+			for(int j = 1; j <= 8; j++)
+				process_bit(msg[i + 8 - j]);
+
+		}
+
+	}
+	else {
+
+		// normal operation
+		for(size_t i = offs_start; i < offs_end; i++) {
+			process_bit(msg[i]);
+		}
+
+	}
+
+	return checksum() == expected_crc;
+
 }
 
 
