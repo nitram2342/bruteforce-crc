@@ -23,6 +23,11 @@ endif()
 
 include_directories(.)
 
+add_library(crc STATIC crc.cc)
+add_library(bf_crc STATIC bf_crc.cc)
+target_link_libraries(bf_crc ${LIBS} crc)
+set(LIBS ${LIBS} bf_crc) 
+
 set(BRUTEFORCE_CRC_CMD bruteforce-crc.cc)
 add_executable(bruteforce-crc ${BRUTEFORCE_CRC_CMD})
 target_link_libraries(bruteforce-crc ${LIBS})
