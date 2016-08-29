@@ -33,12 +33,12 @@
 
 namespace po = boost::program_options;
 
-static std::vector<bf_crc::fast_int_t> expected_crcs;
+static std::vector<uint32_t> expected_crcs;
 
 unsigned int num_threads = 1;
 	    
 
-void extract_expected_crcs_from_messages(std::vector<bf_crc::fast_int_t> & expected_crcs,
+void extract_expected_crcs_from_messages(std::vector<uint32_t> & expected_crcs,
 					 bf_crc::message_list_t messages,
 					 size_t offs_start, size_t len) {
 
@@ -46,7 +46,7 @@ void extract_expected_crcs_from_messages(std::vector<bf_crc::fast_int_t> & expec
   expected_crcs.resize(messages.size());
 
   BOOST_FOREACH(bf_crc::bitset_t const& msg, messages) {
-    bf_crc::fast_int_t crc = 0;
+    uint32_t crc = 0;
     for(size_t i = 0; i < len; i++) {
       crc <<= 1;
       crc |= (msg[offs_start + i] == true ? 1 : 0);
@@ -137,24 +137,24 @@ bf_crc::message_list_t read_file(std::string const& file) {
 
 int main(int argc, char *argv[]) {
 
-	bf_crc crc_bruteforce;
+	bf_crc *crc_bruteforce;
 
  	size_t width = 16;
 	size_t offs_crc = 80;
 	size_t start = 0;
 	size_t end = offs_crc;
 
-	bf_crc::fast_int_t poly = 0;
-	bf_crc::fast_int_t start_poly = 0;
-	bf_crc::fast_int_t end_poly = 0;
+	uint32_t poly = 0;
+	uint32_t start_poly = 0;
+	uint32_t end_poly = 0;
 
 	bool ref_in = false;
 	bool ref_out = false;
 
-	bf_crc::fast_int_t initial = 0;
+	uint32_t initial = 0;
 	bool probe_initial = true;
 
-	bf_crc::fast_int_t final_xor = 0;
+	uint32_t final_xor = 0;
 	bool probe_final_xor = false;
 
 	// Definition of program options
@@ -170,9 +170,9 @@ int main(int argc, char *argv[]) {
     ("end", po::value<size_t>(), "calculate CRC up to this offset (not included)")
 	("initial", po::value<size_t>(), "set intial value (default: 0)")
     ("probe-initial", po::value<bool>(), "bruteforce the intial, overrides initial (default: true)")
-    ("final-xor", po::value<bf_crc::fast_int_t>(), "final xor (default: 0)")
+    ("final-xor", po::value<uint32_t>(), "final xor (default: 0)")
     ("probe-final-xor", po::value<bool>(), "bruteforce the final-xor, overrides final-xor (default: false)")
-    ("poly", po::value<bf_crc::fast_int_t>(), "truncated poly (default: bruteforced)")
+    ("poly", po::value<uint32_t>(), "truncated poly (default: bruteforced)")
     ("reflect-in", po::value<bool>(), "reflect input (default: false)")
     ("reflect-out", po::value<bool>(), "reflect remainder output (default: false)")
     ;
@@ -194,11 +194,11 @@ int main(int argc, char *argv[]) {
 	if(vm.count("offs-crc")) offs_crc = vm["offs-crc"].as<size_t>();
 	if(vm.count("start")) start = vm["start"].as<size_t>();
 	if(vm.count("end")) end = vm["end"].as<size_t>();
-	if(vm.count("initial")) initial = vm["initial"].as<bf_crc::fast_int_t>();
+	if(vm.count("initial")) initial = vm["initial"].as<uint32_t>();
 	if(vm.count("probe-initial")) probe_initial = vm["probe-initial"].as<bool>();
-	if(vm.count("final-xor")) final_xor = vm["final-xor"].as<bf_crc::fast_int_t>();
+	if(vm.count("final-xor")) final_xor = vm["final-xor"].as<uint32_t>();
 	if(vm.count("probe-final-xor")) probe_final_xor = vm["probe-final-xor"].as<bool>();
-	if(vm.count("poly")) poly = vm["poly"].as<bf_crc::fast_int_t>();
+	if(vm.count("poly")) poly = vm["poly"].as<uint32_t>();
 	if(vm.count("reflect-in")) ref_in = vm["reflect-in"].as<bool>();
 	if(vm.count("reflect-out")) ref_out = vm["reflect-out"].as<bool>();
 
@@ -242,21 +242,30 @@ int main(int argc, char *argv[]) {
 	// Extract expected CRCs for each message
 	extract_expected_crcs_from_messages(expected_crcs, msg_list, offs_crc, width);
 
-	// Calculate number of crc calculations
-	crc_bruteforce.crc_steps = poly > 0 ? 1 : 1+MAX_VALUE(width); // number of polys
-	if (probe_initial)
-		crc_bruteforce.crc_steps *= 1+MAX_VALUE(width); // number of inits
-	if(ref_in) crc_bruteforce.crc_steps *= 2;
-	if(ref_out) crc_bruteforce.crc_steps *= 2;
-	if(probe_final_xor) crc_bruteforce.crc_steps *= 1+MAX_VALUE(width);
-
-
 	// Warn user when things are about to go wrong TODO: Needs to be make more cleaver...
   	if(((end-start) % 8 != 0) || (end - start == 0)) {
     	std::cout << std::endl << "Warning: input reflection only works if range start ... end is N * 8 bit with N > 0" << std::endl << std::endl; 
 	}
 
-	int found = crc_bruteforce.do_brute_force(	width,
+	crc_bruteforce = new bf_crc(width, 				// CRC Width
+								poly, 				// Polynomial
+								probe_final_xor, 	// Probe Final XOR?
+								final_xor, 			// Final XOR
+								probe_initial,   	// Probe Initial?
+								initial, 			// Initial
+								ref_in, 			// Probe Reflected Input?
+								ref_out);			// Probe Reflected Output?
+
+	crc_bruteforce->msg_list_ = msg_list;
+	crc_bruteforce->expected_crcs_ = expected_crcs;
+	crc_bruteforce->start_ = start;
+	crc_bruteforce->end_ = end;
+
+	int found = crc_bruteforce->do_brute_force(4);
+
+
+/*
+	int found = crc_bruteforce->do_brute_force(	width,
 												poly,
 												start_poly,
 												end_poly,
@@ -271,6 +280,7 @@ int main(int argc, char *argv[]) {
 												probe_initial,
 												ref_in,
 												ref_out);
+*/
 
 	std::cout << "\nNo model found.\n";
 

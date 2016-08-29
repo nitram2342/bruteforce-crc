@@ -80,17 +80,19 @@ uint64_t bf_crc::get_delta_time_in_ms(struct timeval const& start) {
   return (end.tv_sec*1000 + end.tv_usec/1000.0) - (start.tv_sec*1000 + start.tv_usec/1000.0); 
 }
 
-void bf_crc::show_hit(uint32_t poly, uint32_t init, struct bruteforce_params const& p, bool ref_in, bool ref_out) {
+void bf_crc::show_hit(uint32_t poly, uint32_t init, bool ref_in, bool ref_out) {
+
   std::cout << std::endl
     << "----------------------[ MATCH ]--------------------------------\n"
     << "Found a model for the CRC calculation:\n"
     << "Truncated polynom : 0x" << std::hex << poly << " (" << std::dec << poly << ")\n"
     << "Initial value     : 0x" << std::hex << init << " (" << std::dec << init << ")\n"
-    << "Final XOR         : 0x" << std::hex << p._final_xor << " (" << std::dec << p._final_xor << ")\n"
+    << "Final XOR         : 0x" << std::hex << final_xor_ << " (" << std::dec << final_xor_ << ")\n"
     << "Reflected input   : " << bool_to_str(ref_in) << "\n"
     << "Reflected output  : " << bool_to_str(ref_out) << "\n"
-    << "Message offset    : from bit " << p._start << " .. " << p._end << " (end not included)\n"
+    << "Message offset    : from bit " << start_ << " .. " << end_ << " (end not included)\n"
     << "\n";
+
 }
 
 void bf_crc::print_stats(void) {
@@ -113,20 +115,20 @@ void bf_crc::print_stats(void) {
 
 }
 
-bool bf_crc::brute_force(struct bruteforce_params p) {
+bool bf_crc::brute_force(uint32_t search_poly_start, uint32_t search_poly_end) {
   
 	// Get a CRC checker
-	crc_t crc(p._width);
+	crc_t crc(crc_width_);
 	uint32_t init = 0;
-	uint32_t init_to_check = p._probe_initial ? MAX_VALUE(p._width) : 0;
+	uint32_t init_to_check = probe_initial_ ? MAX_VALUE(crc_width_) : 0;
 
-	for(int probe_ref_in = 0; probe_ref_in <= bool_to_int(p._probe_ref_in); probe_ref_in++) {
+	for(int probe_ref_in = 0; probe_ref_in <= bool_to_int(probe_reflected_input_); probe_ref_in++) {
 
-	    for(int probe_ref_out = 0; probe_ref_out <= bool_to_int(p._probe_ref_out); probe_ref_out++) {
+	    for(int probe_ref_out = 0; probe_ref_out <= bool_to_int(probe_reflected_output_); probe_ref_out++) {
 
-			for(uint32_t poly = p._start_poly; poly < p._end_poly && poly <= MAX_VALUE(p._width); poly++) {
+			for(uint32_t poly = search_poly_start; poly < search_poly_end && poly <= MAX_VALUE(crc_width_); poly++) {
 
-				for(uint32_t final_xor = (p._probe_final_xor ? 0 : p._final_xor); final_xor <= (p._probe_final_xor ? MAX_VALUE(p._width) : p._final_xor); final_xor++) {
+				for(uint32_t final_xor = (probe_final_xor_ ? 0 : final_xor_); final_xor <= (probe_final_xor_ ? MAX_VALUE(crc_width_) : final_xor_); final_xor++) {
 
 					crc.set(poly, 0, final_xor, int_to_bool(probe_ref_in), int_to_bool(probe_ref_out));
 
@@ -135,14 +137,14 @@ bool bf_crc::brute_force(struct bruteforce_params p) {
 						bool match = true;
 						size_t m_i;
 
-						for(m_i = 0; match && (m_i < p._msg_list.size()); m_i++) {
+						for(m_i = 0; match && (m_i < msg_list_.size()); m_i++) {
 
-							match = crc.calc_crc(init, p._msg_list[m_i], p._start, p._end, p._expected_crcs[m_i]);
+							match = crc.calc_crc(init, msg_list_[m_i], start_, end_, expected_crcs_[m_i]);
 
 						}
 
-						if(m_i == p._msg_list.size()) {
-							show_hit(poly, init, p, probe_ref_in ? true : false, probe_ref_out ? true : false);
+						if(m_i == msg_list_.size()) {
+							show_hit(poly, init, probe_ref_in ? true : false, probe_ref_out ? true : false);
 						}
 
 					}
@@ -153,7 +155,7 @@ bool bf_crc::brute_force(struct bruteforce_params p) {
 					mymutex.lock();
 					crc_counter += init_to_check;
 
-					if(p._probe_final_xor || (poly % 0x80 == 0))
+					if(probe_final_xor_ || (poly % 0x80 == 0))
 						print_stats();
 					mymutex.unlock();
 				}
@@ -165,21 +167,7 @@ bool bf_crc::brute_force(struct bruteforce_params p) {
 	return false;
 }
 
-int bf_crc::do_brute_force(	unsigned int width,
-					fast_int_t poly,
-					fast_int_t start_poly,
-					fast_int_t end_poly,
-					int num_threads,
-					uint32_t final_xor,
-					uint32_t initial,
-					size_t start,
-					size_t end,
-					message_list_t msg_list,
-					std::vector<fast_int_t>expected_crcs,
-					bool probe_final_xor,
-					bool probe_initial,
-					bool ref_in,
-					bool ref_out){
+int bf_crc::do_brute_force(int num_threads){
 
 
 	// For statistics
@@ -187,28 +175,14 @@ int bf_crc::do_brute_force(	unsigned int width,
 	gettimeofday(&current_time, NULL);
 
 	ThreadPool<boost::function0<void> > pool;
-	int poly_step = poly > 0 ? 1 : MAX_VALUE(width)/num_threads;
+	int poly_step = polynomial_ > 0 ? 1 : MAX_VALUE(crc_width_)/num_threads;
 
 
 	// Step through search space, assigning a batch of polynomials to each thread 
 	// (poly_step polynomials per thread)
-	for(uint32_t _poly = start_poly; _poly <= end_poly; _poly += poly_step) {
+	for(uint32_t _poly = 0; _poly <= MAX_VALUE(crc_width_); _poly += poly_step) {
 
-		struct bruteforce_params p(	width, 
-									_poly, 
-									_poly + poly_step, 
-									final_xor, 
-									initial,
-									start, 
-									end,
-									msg_list, 
-									expected_crcs,
-					   				probe_final_xor,
-									probe_initial,
-									ref_in,
-									ref_out);
-
-		pool.add(boost::bind(&bf_crc::brute_force, this, p));
+		pool.add(boost::bind(&bf_crc::brute_force, this, _poly, _poly + poly_step));
 
 	}
 

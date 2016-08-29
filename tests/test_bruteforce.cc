@@ -35,7 +35,7 @@ boost::dynamic_bitset<> convert_to_bitset(uint8_t array[], size_t size) {
 BOOST_AUTO_TEST_CASE(crcSixteen)
 {
 	// 16 bit CRC's
-	bf_crc crc_bruteforce;
+	bf_crc *crc_bruteforce;
 	typedef boost::dynamic_bitset<> dbType;
 	uint16_t width = 16;
 	bf_crc::crc_t crc(width);
@@ -45,28 +45,12 @@ BOOST_AUTO_TEST_CASE(crcSixteen)
 	srand((unsigned)time(0));
 
 	bf_crc::message_list_t msg_list;
-	std::vector<bf_crc::fast_int_t> crc_list;
+	bf_crc::expected_crc_list_t crc_list;
 
 	/*
 	 * CRC-16/CCITT-FALSE
 	 * width=16 poly=0x1021 init=0xffff refin=false refout=false xorout=0x0000 check=0x29b1 name="CRC-16/CCITT-FALSE"
 	 */
-/*
-	uint8_t data_1[] = {0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x30}; 
-	msg = convert_to_bitset(data_1, 9);
-	crc.set(0x8005, // Poly
-			0x0000, // Initial (Overwritten)
-			0x0000, // Final XOR
-			true,  // Reflect input
-			true); // Reflect output
-	crc.calc_crc(	0x0000, 			// Initial
-			    	msg,				// Data
-			    	0,					// Start offset
-			    	sizeof(data_1)*8,	// End data (# of bits)
-			    	0xBB3D);			// Expected CRC - not required
-
-	msg_list.push_back(msg);
-	crc_list.push_back(crc.checksum()); */
 
 	// REVENG Check
 	uint8_t data_0[] = {0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39}; 
@@ -113,13 +97,24 @@ BOOST_AUTO_TEST_CASE(crcSixteen)
 	}
 
 
-	// Calculate number of crc calculations
-	crc_bruteforce.crc_steps = 1+(uint32_t)((1 << width) - 1); // number of polys
-	crc_bruteforce.crc_steps *= 1+(uint32_t)((1 << width) - 1); // number of inits
-	crc_bruteforce.crc_steps *= 2;
-	crc_bruteforce.crc_steps *= 2;
+	crc_bruteforce = new bf_crc(width, 		// CRC Width
+								0, 			// Polynomial
+								false, 		// Probe Final XOR?
+								0, 			// Final XOR
+								false,   	// Probe Initial?
+								0, 			// Initial
+								true, 		// Probe Reflected Input?
+								true);		// Probe Reflected Output?
 
-	int found = crc_bruteforce.do_brute_force(	width,
+	crc_bruteforce->msg_list_ = msg_list;
+	crc_bruteforce->expected_crcs_ = crc_list;
+	crc_bruteforce->start_ = 0;
+	crc_bruteforce->end_ = 9*8;
+
+	int found = crc_bruteforce->do_brute_force(4);
+
+/*
+	int found = crc_bruteforce->do_brute_force(	width,
 												0, //poly,
 												0, //start_poly,
 												(uint32_t)((1 << width) - 1), //end_poly,
@@ -131,10 +126,10 @@ BOOST_AUTO_TEST_CASE(crcSixteen)
 												msg_list,
 												crc_list,
 												false,//probe_final_xor,
-												true,//probe_initial,
+												false,//probe_initial,
 												true, //ref_in,
 												true); //ref_out);
-
+*/
 	BOOST_CHECK(1 == 1);
 
 }
