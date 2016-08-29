@@ -62,7 +62,7 @@ std::string bf_crc::number_to_str(uint64_t v) {
     return f.str();
   }
   else if(v < 1000*1000*1000*1000L) {
-    boost::format f("%1%G");
+    boost::format f("%1%B");
     f % (v/1000000000L);
     return f.str();
   }
@@ -90,7 +90,7 @@ void bf_crc::show_hit(uint32_t poly, uint32_t init, bool ref_in, bool ref_out) {
     << "Final XOR         : 0x" << std::hex << final_xor_ << " (" << std::dec << final_xor_ << ")\n"
     << "Reflected input   : " << bool_to_str(ref_in) << "\n"
     << "Reflected output  : " << bool_to_str(ref_out) << "\n"
-    << "Message offset    : from bit " << start_ << " .. " << end_ << " (end not included)\n"
+    //<< "Message offset    : from bit " << start_ << " .. " << end_ << " (end not included)\n"
     << "\n";
 
 }
@@ -106,16 +106,16 @@ void bf_crc::print_stats(void) {
       uint64_t crcs_per_sec = (1000*crc_counter/elapsed_ms);
       std::cout << "\rtime=" << (elapsed_ms/1000) << "s "
 		<< "CRCs/s=" <<  crcs_per_sec
-		<< " done=" << (crc_counter*100.0/crc_steps) << "%"
-		<< " (" << number_to_str(crc_counter) << " of " << number_to_str(crc_steps) << ")"
-		<< " time_to_go=" <<  (crc_steps - crc_counter)/crcs_per_sec/3600 << " h"
+		<< " done=" << (crc_counter*100.0/test_vector_count()) << "%"
+		<< " (" << number_to_str(crc_counter) << " of " << number_to_str(test_vector_count()) << ")"
+		<< " time_to_go=" <<  (test_vector_count() - crc_counter)/crcs_per_sec/3600 << " h"
 		<< "     ";
     }
   }
 
 }
 
-bool bf_crc::brute_force(uint32_t search_poly_start, uint32_t search_poly_end) {
+bool bf_crc::brute_force(uint32_t search_poly_start, uint32_t search_poly_end, std::vector<test_vector_t> test_vectors) {
   
 	// Get a CRC checker
 	crc_t crc(crc_width_);
@@ -137,13 +137,13 @@ bool bf_crc::brute_force(uint32_t search_poly_start, uint32_t search_poly_end) {
 						bool match = true;
 						size_t m_i;
 
-						for(m_i = 0; match && (m_i < msg_list_.size()); m_i++) {
+						for(m_i = 0; match && (m_i < test_vectors.size()); m_i++) {
 
-							match = crc.calc_crc(init, msg_list_[m_i], start_, end_, expected_crcs_[m_i]);
+							match = crc.calc_crc(init, test_vectors[m_i].message, test_vectors[m_i].crc);
 
 						}
 
-						if(m_i == msg_list_.size()) {
+						if(m_i == test_vectors.size()) {
 							show_hit(poly, init, probe_ref_in ? true : false, probe_ref_out ? true : false);
 						}
 
@@ -167,7 +167,7 @@ bool bf_crc::brute_force(uint32_t search_poly_start, uint32_t search_poly_end) {
 	return false;
 }
 
-int bf_crc::do_brute_force(int num_threads){
+int bf_crc::do_brute_force(int num_threads, std::vector<test_vector_t> test_vectors){
 
 
 	// For statistics
@@ -182,7 +182,7 @@ int bf_crc::do_brute_force(int num_threads){
 	// (poly_step polynomials per thread)
 	for(uint32_t _poly = 0; _poly <= MAX_VALUE(crc_width_); _poly += poly_step) {
 
-		pool.add(boost::bind(&bf_crc::brute_force, this, _poly, _poly + poly_step));
+		pool.add(boost::bind(&bf_crc::brute_force, this, _poly, _poly + poly_step, test_vectors));
 
 	}
 

@@ -50,8 +50,6 @@ public:
 
   bool calc_crc(value_type const use_initial,
 		boost::dynamic_bitset<> const& msg,
-		size_t offs_start,
-		size_t offs_end,
 		value_type const expected_crc);
 
   value_type reflect(value_type  x ) const;

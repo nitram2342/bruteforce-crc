@@ -37,27 +37,6 @@ static std::vector<uint32_t> expected_crcs;
 
 unsigned int num_threads = 1;
 	    
-
-void extract_expected_crcs_from_messages(std::vector<uint32_t> & expected_crcs,
-					 bf_crc::message_list_t messages,
-					 size_t offs_start, size_t len) {
-
-  int msg_i = 0;
-  expected_crcs.resize(messages.size());
-
-  BOOST_FOREACH(bf_crc::bitset_t const& msg, messages) {
-    uint32_t crc = 0;
-    for(size_t i = 0; i < len; i++) {
-      crc <<= 1;
-      crc |= (msg[offs_start + i] == true ? 1 : 0);
-    }
-    printf("Extracted message with crc %04x\n", crc);
-    expected_crcs[msg_i] = crc;
-    msg_i++;
-  }
-}
-
-
 void mark_crc(size_t offs_start, size_t width) {
   size_t i, j;
   for(i = 0; i < offs_start; i++) {
@@ -76,7 +55,7 @@ void mark_crc(size_t offs_start, size_t width) {
   std::cout << "\n";
 }
 	    
-void print_message(bf_crc::bitset_t const& msg) {
+void print_message(boost::dynamic_bitset<> const& msg) {
   for(size_t i = 0; i < msg.size(); i++) {
     if((i > 0) && (i % 8 == 0)) std::cout << " ";
     std::cout << (msg[i] ? "1" : "0");
@@ -113,16 +92,42 @@ boost::dynamic_bitset<> parse_line(std::string const& line) {
   return bits;
 }
 
-bf_crc::message_list_t read_file(std::string const& file) {
+std::vector<bf_crc::test_vector_t> read_file(std::string const& file, int32_t offset_message, int32_t message_length, int32_t offset_crc, int32_t crc_length) {
 
-  bf_crc::message_list_t msg_list;
+  	std::vector<bf_crc::test_vector_t> test_vectors;
 
-  std::ifstream ifs(file.c_str());
-  std::string temp;
+  	std::ifstream ifs(file.c_str());
+ 	std::string current_line;
     
-  while(getline(ifs, temp))
-    msg_list.push_back(parse_line(temp));
-  return msg_list;
+  	while(getline(ifs, current_line))
+	{
+
+		bf_crc::test_vector_t tv;
+		boost::dynamic_bitset<>  msg = parse_line(current_line);
+
+		boost::dynamic_bitset<> resized_msg;
+		resized_msg.resize(message_length);
+
+		int32_t bit = 0;
+		for(int32_t i = offset_message; i < offset_message + message_length; i++) {
+			resized_msg[bit++] = msg[i];
+		}
+		tv.message = resized_msg;
+
+		uint32_t crc = 0;
+		for(int32_t i = 0; i < crc_length; i++) {
+		  crc <<= 1;
+		  crc |= (msg[offset_crc + i] == true ? 1 : 0);
+		}
+
+		printf("Extracted message with crc %04x\n", crc);
+		tv.crc = crc;
+
+		test_vectors.push_back(tv);
+
+	}
+
+  return test_vectors;
 
 }
 
@@ -206,9 +211,9 @@ int main(int argc, char *argv[]) {
 	if(width > 16) { std::cout << "maximum value for width is: 16\n"; exit(1); } // Why 16?
 
 	// Read messages from intput file
-	bf_crc::message_list_t msg_list;
+	std::vector<bf_crc::test_vector_t> test_vectors;
  	if(vm.count("file")) {
-		msg_list = read_file(vm["file"].as<std::string>());
+		test_vectors = read_file(vm["file"].as<std::string>(), start, end-start, offs_crc, width);
 	}
 
 	// Define search space
@@ -239,9 +244,6 @@ int main(int argc, char *argv[]) {
 			    << "probe reflect out        : " << bf_crc::bool_to_str(ref_out) << std::endl
 			    << std::endl;
 
-	// Extract expected CRCs for each message
-	extract_expected_crcs_from_messages(expected_crcs, msg_list, offs_crc, width);
-
 	// Warn user when things are about to go wrong TODO: Needs to be make more cleaver...
   	if(((end-start) % 8 != 0) || (end - start == 0)) {
     	std::cout << std::endl << "Warning: input reflection only works if range start ... end is N * 8 bit with N > 0" << std::endl << std::endl; 
@@ -256,12 +258,7 @@ int main(int argc, char *argv[]) {
 								ref_in, 			// Probe Reflected Input?
 								ref_out);			// Probe Reflected Output?
 
-	crc_bruteforce->msg_list_ = msg_list;
-	crc_bruteforce->expected_crcs_ = expected_crcs;
-	crc_bruteforce->start_ = start;
-	crc_bruteforce->end_ = end;
-
-	int found = crc_bruteforce->do_brute_force(4);
+	int found = crc_bruteforce->do_brute_force(4, test_vectors);
 
 
 /*

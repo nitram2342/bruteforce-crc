@@ -25,9 +25,10 @@ class bf_crc {
 
 	public:
 
-		typedef boost::dynamic_bitset<> bitset_t;
-		typedef std::vector<bitset_t> message_list_t;
-		typedef std::vector<uint32_t> expected_crc_list_t;
+		typedef struct vector_ {
+			boost::dynamic_bitset<> message;
+			uint32_t crc;
+		} test_vector_t;
 
 		typedef my_crc_basic crc_t;
 
@@ -79,11 +80,7 @@ public:
 	bool probe_reflected_input() const { return probe_reflected_input_; }
 	void set_probe_reflected_output(bool var) { probe_reflected_output_ = var; update_test_vector_count(); }
 	bool probe_reflected_output() const { return probe_reflected_output_; }
-
-	message_list_t msg_list_;
-	expected_crc_list_t expected_crcs_;
-	int start_;
-	int end_;
+	uint64_t test_vector_count() const { return test_vector_count_; }
 
 	private:
 
@@ -145,13 +142,9 @@ public:
 			set_probe_reflected_input(probe_reflected_input);
 			set_probe_reflected_output(probe_reflected_output);
 		}
-/*
-			size_t _start, _end; // message offsets
-			message_list_t const & _msg_list;
-			std::vector<fast_int_t> const & _expected_crcs;
-*/
-		bool brute_force(uint32_t search_poly_start, uint32_t search_poly_end);
-		int do_brute_force(int num_threads);
+
+		bool brute_force(uint32_t search_poly_start, uint32_t search_poly_end, std::vector<test_vector_t> test_vectors);
+		int do_brute_force(int num_threads, std::vector<test_vector_t> test_vectors);
 
 };
 

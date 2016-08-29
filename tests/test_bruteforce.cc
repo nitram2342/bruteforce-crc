@@ -44,8 +44,8 @@ BOOST_AUTO_TEST_CASE(crcSixteen)
 	// Lets make sure things are random
 	srand((unsigned)time(0));
 
-	bf_crc::message_list_t msg_list;
-	bf_crc::expected_crc_list_t crc_list;
+	std::vector<bf_crc::test_vector_t> test_vectors;
+	bf_crc::test_vector_t test_vector;
 
 	/*
 	 * CRC-16/CCITT-FALSE
@@ -62,13 +62,11 @@ BOOST_AUTO_TEST_CASE(crcSixteen)
 			true); // Reflect output
 	crc.calc_crc(	0x0000, 			// Initial
 			    	msg,				// Data
-			    	0,					// Start offset
-			    	sizeof(data_0)*8,	// End data (# of bits)
 			    	0xBB3D);			// Expected CRC - not required
 
-	msg_list.push_back(msg);
-	crc_list.push_back(crc.checksum());
-
+	test_vector.message = msg;
+	test_vector.crc = crc.checksum();
+	test_vectors.push_back(test_vector);
 
 	for (int i = 0; i < 10; i++) 
 	{
@@ -87,12 +85,12 @@ BOOST_AUTO_TEST_CASE(crcSixteen)
 				true); // Reflect output
 		crc.calc_crc(	0x0000, 			// Initial
 						msg,				// Data
-						0,					// Start offset
-						sizeof(data)*8,	// End data (# of bits)
 						0xBB3D);			// Expected CRC - not required
 
-		msg_list.push_back(msg);
-		crc_list.push_back(crc.checksum());
+
+	test_vector.message = msg;
+	test_vector.crc = crc.checksum();
+	test_vectors.push_back(test_vector);
 
 	}
 
@@ -101,35 +99,13 @@ BOOST_AUTO_TEST_CASE(crcSixteen)
 								0, 			// Polynomial
 								false, 		// Probe Final XOR?
 								0, 			// Final XOR
-								false,   	// Probe Initial?
+								true,   	// Probe Initial?
 								0, 			// Initial
 								true, 		// Probe Reflected Input?
 								true);		// Probe Reflected Output?
 
-	crc_bruteforce->msg_list_ = msg_list;
-	crc_bruteforce->expected_crcs_ = crc_list;
-	crc_bruteforce->start_ = 0;
-	crc_bruteforce->end_ = 9*8;
+	int found = crc_bruteforce->do_brute_force(4, test_vectors);
 
-	int found = crc_bruteforce->do_brute_force(4);
-
-/*
-	int found = crc_bruteforce->do_brute_force(	width,
-												0, //poly,
-												0, //start_poly,
-												(uint32_t)((1 << width) - 1), //end_poly,
-												4, //num_threads,
-												0,//final_xor,
-												0,//initial,
-												0,//start,
-												9*8,//end,
-												msg_list,
-												crc_list,
-												false,//probe_final_xor,
-												false,//probe_initial,
-												true, //ref_in,
-												true); //ref_out);
-*/
 	BOOST_CHECK(1 == 1);
 
 }

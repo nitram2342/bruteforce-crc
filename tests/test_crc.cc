@@ -54,8 +54,6 @@ BOOST_AUTO_TEST_CASE(crcFourteen)
 			true); // Reflect output
 	BOOST_CHECK(crc.calc_crc(	0x0000, 			// Initial
 			    				msg,				// Data
-			    				0,					// Start offset
-			    				sizeof(data_1_0)*8,	// End data (# of bits)
 			    				0x082d) == 1);		// Expected CRC
 
 	// ETSI EN 300 751 - TODO: Needs Verification
@@ -68,8 +66,6 @@ BOOST_AUTO_TEST_CASE(crcFourteen)
 			true); // Reflect output
 	BOOST_CHECK(crc.calc_crc(	0x0000, 			// Initial
 			    				msg,				// Data
-			    				0,					// Start offset
-			    				sizeof(data_1_1)*8,	// End data (# of bits)
 			    				0x083B) == 1);		// Expected CRC
 
 }
@@ -96,8 +92,6 @@ BOOST_AUTO_TEST_CASE(crcSixteen)
 			true); // Reflect output
 	BOOST_CHECK(crc.calc_crc(	0x0000, 			// Initial
 			    				msg,				// Data
-			    				0,					// Start offset
-			    				sizeof(data_1_0)*8,	// End data (# of bits)
 			    				0xBB3D) == 1);		// Expected CRC
 
 	/* 
@@ -115,8 +109,6 @@ BOOST_AUTO_TEST_CASE(crcSixteen)
 			false); // Reflect output
 	BOOST_CHECK(crc.calc_crc(	0xFFFF, 			// Initial
 			    				msg,				// Data
-			    				0,					// Start offset
-			    				sizeof(data_3_0)*8,	// End data (# of bits)
 			    				0x84C0) == 1);		// Expected CRC
 
 	// Autosar Release 4.2.2 p.25 : F2 01 83 : D374
@@ -129,8 +121,6 @@ BOOST_AUTO_TEST_CASE(crcSixteen)
 			false); // Reflect output
 	BOOST_CHECK(crc.calc_crc(	0xFFFF, 			// Initial
 			    				msg,				// Data
-			    				0,					// Start offset
-			    				sizeof(data_3_1)*8,	// End data (# of bits)
 			    				0xD374) == 1);		// Expected CRC
 
 	// Autosar Release 4.2.2 p.25 : 0F AA 00 55 : 2023
@@ -143,8 +133,6 @@ BOOST_AUTO_TEST_CASE(crcSixteen)
 			false); // Reflect output
 	BOOST_CHECK(crc.calc_crc(	0xFFFF, 			// Initial
 			    				msg,				// Data
-			    				0,					// Start offset
-			    				sizeof(data_3_2)*8,	// End data (# of bits)
 			    				0x2023) == 1);		// Expected CRC
 
 	// Autosar Release 4.2.2 p.25 : 00 FF 55 11 : B8F9
@@ -157,8 +145,6 @@ BOOST_AUTO_TEST_CASE(crcSixteen)
 			false); // Reflect output
 	BOOST_CHECK(crc.calc_crc(	0xFFFF, 			// Initial
 			    				msg,				// Data
-			    				0,					// Start offset
-			    				sizeof(data_3_3)*8,	// End data (# of bits)
 			    				0xB8F9) == 1);		// Expected CRC
 
 
@@ -172,8 +158,6 @@ BOOST_AUTO_TEST_CASE(crcSixteen)
 			false); // Reflect output
 	BOOST_CHECK(crc.calc_crc(	0xFFFF, 			// Initial
 			    				msg,				// Data
-			    				0,					// Start offset
-			    				sizeof(data_3_4)*8,	// End data (# of bits)
 			    				0xF53F) == 1);		// Expected CRC
 /* TODO:
 92
