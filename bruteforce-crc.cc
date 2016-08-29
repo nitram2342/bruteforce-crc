@@ -231,12 +231,12 @@ int main(int argc, char *argv[]) {
 		std::cout << "initial value            : " << initial << std::endl;
 
 	if (probe_final_xor)
-		std::cout << "probe final xor          : " << crc_bruteforce.bool_to_str(probe_final_xor) << std::endl;
+		std::cout << "probe final xor          : " << bf_crc::bool_to_str(probe_final_xor) << std::endl;
 	else
 		std::cout << "final xor                : " << final_xor << std::endl;
 
-	std::cout	<< "probe reflect in         : " << crc_bruteforce.bool_to_str(ref_in) << std::endl
-			    << "probe reflect out        : " << crc_bruteforce.bool_to_str(ref_out) << std::endl
+	std::cout	<< "probe reflect in         : " << bf_crc::bool_to_str(ref_in) << std::endl
+			    << "probe reflect out        : " << bf_crc::bool_to_str(ref_out) << std::endl
 			    << std::endl;
 
 	// Extract expected CRCs for each message

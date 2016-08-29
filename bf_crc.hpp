@@ -85,10 +85,10 @@ class bf_crc {
 
 		uint64_t crc_steps;
 
-		int bool_to_int(bool v);
-		bool int_to_bool(int v);
-		std::string bool_to_str(bool v);
-		std::string number_to_str(uint64_t v);
+		static int bool_to_int(bool v);
+		static bool int_to_bool(int v);
+		static std::string bool_to_str(bool v);
+		static std::string number_to_str(uint64_t v);
 
 		bool brute_force(struct bruteforce_params p);
 		int do_brute_force(	unsigned int width,
