@@ -99,7 +99,7 @@ BOOST_AUTO_TEST_CASE(crcSixteen)
 								0, 			// Polynomial
 								false, 		// Probe Final XOR?
 								0, 			// Final XOR
-								true,   	// Probe Initial?
+								false,   	// Probe Initial?
 								0, 			// Initial
 								true, 		// Probe Reflected Input?
 								true);		// Probe Reflected Output?

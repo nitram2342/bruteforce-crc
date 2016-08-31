@@ -115,77 +115,130 @@ void bf_crc::print_stats(void) {
 
 }
 
-bool bf_crc::brute_force(uint32_t search_poly_start, uint32_t search_poly_end, std::vector<test_vector_t> test_vectors) {
-  
+bool bf_crc::brute_force(int thread_number, uint32_t search_poly_start, uint32_t search_poly_end, std::vector<test_vector_t> test_vectors) {
+
+	// Verbose option only
+	if (verbose_)
+	{
+		// Lock mutex to avoid garbled std_out
+		mymutex.lock();
+
+		// Thread information
+		std::cout << "Thread " << thread_number << " started, searching polynomial " << std::hex << search_poly_start << " to " << std::hex << search_poly_end << std::endl;
+
+		mymutex.unlock();
+	}
+
+	// Otherwise the returned list is going to take up a LOT of RAM
+	assert(test_vectors.size() > 0);
+
 	// Get a CRC checker
 	crc_t crc(crc_width_);
+
+	// Initial value defaults to 0
 	uint32_t init = 0;
+
+	// If init search is requested, set the search space
 	uint32_t init_to_check = probe_initial_ ? MAX_VALUE(crc_width_) : 0;
 
-	for(int probe_ref_in = 0; probe_ref_in <= bool_to_int(probe_reflected_input_); probe_ref_in++) {
+	// Probe reflected input
+	for(int probe_reflected_input = 0; 
+		probe_reflected_input <= bool_to_int(probe_reflected_input_); 
+			probe_reflected_input++) {
 
-	    for(int probe_ref_out = 0; probe_ref_out <= bool_to_int(probe_reflected_output_); probe_ref_out++) {
+		// Probe reflected output
+	    for(int probe_reflected_output = 0; 
+			probe_reflected_output <= bool_to_int(probe_reflected_output_); 
+				probe_reflected_output++) {
 
-			for(uint32_t poly = search_poly_start; poly < search_poly_end && poly <= MAX_VALUE(crc_width_); poly++) {
+			// Check all possible polynomials
+			for(uint32_t poly = search_poly_start; 
+				poly <= search_poly_end && poly <= MAX_VALUE(crc_width_); 
+					poly++) {
 
-				for(uint32_t final_xor = (probe_final_xor_ ? 0 : final_xor_); final_xor <= (probe_final_xor_ ? MAX_VALUE(crc_width_) : final_xor_); final_xor++) {
+				// Probe all final xors
+				for(uint32_t final_xor = (probe_final_xor_ ? 0 : final_xor_); 
+					final_xor <= (probe_final_xor_ ? MAX_VALUE(crc_width_) : final_xor_); 
+						final_xor++) {
 
-					crc.set(poly, 0, final_xor, int_to_bool(probe_ref_in), int_to_bool(probe_ref_out));
+					// Set the CRC engine settings (initial set to zero, igored)
+					crc.set(poly, 0, final_xor, int_to_bool(probe_reflected_input), int_to_bool(probe_reflected_output));
 
+					// For all possible initials
 					for(init = 0; init <= init_to_check; init++) {
 
+						// Start with true
 						bool match = true;
 						size_t m_i;
 
-						for(m_i = 0; match && (m_i < test_vectors.size()); m_i++) {
-
+						// Over all test vectirs, test to see if CRC settings wor
+						for(m_i = 0; match && (m_i < test_vectors.size()); m_i++)
 							match = crc.calc_crc(init, test_vectors[m_i].message, test_vectors[m_i].crc);
 
+						// If match is true there were no errors, TODO: why checl m_i against test_vectors_size?
+						if(match == true && m_i == test_vectors.size()) {
+							show_hit(poly, init, probe_reflected_input ? true : false, probe_reflected_output ? true : false);
 						}
 
-						if(m_i == test_vectors.size()) {
-							show_hit(poly, init, probe_ref_in ? true : false, probe_ref_out ? true : false);
-						}
+					} // end for loop, initials
 
-					}
-
-
-
-					//boost::mutex::scoped_lock mylock(mymutex);
+					// Lock the mutex, blocks until mutex avaliable
 					mymutex.lock();
+
+					// Increase counter by initial's being checkeD 
 					crc_counter += init_to_check;
 
+					// TODO: is this a good way to do this?
 					if(probe_final_xor_ || (poly % 0x80 == 0))
 						print_stats();
+
+					// Unlock the mutex
 					mymutex.unlock();
-				}
-			}
 
-		}
+				} // end for loop, final_xor
 
-	}
+			} // end for loop, polynomial
+
+		} // end for loop, reflected output
+
+	} // end for loop, reflected input
+
 	return false;
 }
 
 int bf_crc::do_brute_force(int num_threads, std::vector<test_vector_t> test_vectors){
 
 
-	// For statistics
+	// Record start time for statistics
 	gettimeofday(&start_time, NULL);
 	gettimeofday(&current_time, NULL);
 
+	// Start a thread pool
 	ThreadPool<boost::function0<void> > pool;
+
+	// Polystep is how the search polynomials are spread betweeen threads
 	int poly_step = polynomial_ > 0 ? 1 : MAX_VALUE(crc_width_)/num_threads;
 
 
+	std::cout << "poly_step: " << std::hex << poly_step << std::endl;
+	std::cout << "num_threads: " << std::hex << num_threads << std::endl;
+	std::cout << "MAX_VAL: " << std::hex << MAX_VALUE(crc_width_) << std::endl;
+
 	// Step through search space, assigning a batch of polynomials to each thread 
 	// (poly_step polynomials per thread)
-	for(uint32_t _poly = 0; _poly <= MAX_VALUE(crc_width_); _poly += poly_step) {
+	int thread_number = 0;
+	for(uint32_t _poly = 0; _poly <= MAX_VALUE(crc_width_); _poly += poly_step + 1) {
 
-		pool.add(boost::bind(&bf_crc::brute_force, this, _poly, _poly + poly_step, test_vectors));
+		// Limit end poly size, rounding could cause problems with odd number of processors
+		uint32_t end_poly = _poly + poly_step - 1;
+		if (end_poly > MAX_VALUE(crc_width_)) end_poly = MAX_VALUE(crc_width_);
+
+		// Start the thread
+		pool.add(boost::bind(&bf_crc::brute_force, this, thread_number++, _poly, _poly + poly_step, test_vectors));
 
 	}
 
+	// Wait for all threads to complete
 	pool.wait();
 
 return 0;

@@ -30,6 +30,14 @@ class bf_crc {
 			uint32_t crc;
 		} test_vector_t;
 
+		typedef struct crc_match_ {
+			uint32_t polynomial;
+			uint32_t initial;
+			uint32_t final_xor;
+			bool reflected_input;
+			bool reflected_output;
+		} crc_match_t;
+
 		typedef my_crc_basic crc_t;
 
 		bf_crc(	uint16_t crc_width, 
@@ -51,36 +59,39 @@ class bf_crc {
 							probe_reflected_output);
 		}
 
-private: 
-    uint16_t crc_width_; 
-    uint32_t polynomial_; 
-	bool probe_final_xor_;
-	uint32_t final_xor_;
-	bool probe_initial_;
-	uint32_t initial_;
-	bool probe_reflected_input_;
-	bool probe_reflected_output_;
+	private: 
+		uint16_t crc_width_; 
+		uint32_t polynomial_; 
+		bool probe_final_xor_;
+		uint32_t final_xor_;
+		bool probe_initial_;
+		uint32_t initial_;
+		bool probe_reflected_input_;
+		bool probe_reflected_output_;
 
-	uint64_t test_vector_count_;
+		uint64_t test_vector_count_;
+		bool verbose_;
 
-public: 
-	void set_crc_width(uint16_t var) { crc_width_ = var; update_test_vector_count(); }
-	uint16_t crc_width() const { return crc_width_; }
-	void set_polynomial(uint32_t var) { polynomial_ = var; update_test_vector_count(); }
-	uint32_t polynomial() const { return polynomial_; }
-	void set_probe_final_xor(bool var) { probe_final_xor_ = var; update_test_vector_count(); }
-	bool probe_final_xor() const { return probe_final_xor_; }
-	void set_final_xor(uint32_t var) { final_xor_ = var; }
-	uint32_t final_xor() const { return final_xor_; }
-	void set_probe_initial(bool var) { probe_initial_ = var; update_test_vector_count(); }
-	bool probe_initial() const { return probe_initial_; }
-	void set_initial(uint32_t var) { initial_ = var; }
-	uint32_t initial() const { return initial_; }
-	void set_probe_reflected_input(bool var) { probe_reflected_input_ = var; update_test_vector_count(); }
-	bool probe_reflected_input() const { return probe_reflected_input_; }
-	void set_probe_reflected_output(bool var) { probe_reflected_output_ = var; update_test_vector_count(); }
-	bool probe_reflected_output() const { return probe_reflected_output_; }
-	uint64_t test_vector_count() const { return test_vector_count_; }
+	public: 
+		void set_crc_width(uint16_t var) { crc_width_ = var; update_test_vector_count(); }
+		uint16_t crc_width() const { return crc_width_; }
+		void set_polynomial(uint32_t var) { polynomial_ = var; update_test_vector_count(); }
+		uint32_t polynomial() const { return polynomial_; }
+		void set_probe_final_xor(bool var) { probe_final_xor_ = var; update_test_vector_count(); }
+		bool probe_final_xor() const { return probe_final_xor_; }
+		void set_final_xor(uint32_t var) { final_xor_ = var; }
+		uint32_t final_xor() const { return final_xor_; }
+		void set_probe_initial(bool var) { probe_initial_ = var; update_test_vector_count(); }
+		bool probe_initial() const { return probe_initial_; }
+		void set_initial(uint32_t var) { initial_ = var; }
+		uint32_t initial() const { return initial_; }
+		void set_probe_reflected_input(bool var) { probe_reflected_input_ = var; update_test_vector_count(); }
+		bool probe_reflected_input() const { return probe_reflected_input_; }
+		void set_probe_reflected_output(bool var) { probe_reflected_output_ = var; update_test_vector_count(); }
+		bool probe_reflected_output() const { return probe_reflected_output_; }
+		uint64_t test_vector_count() const { return test_vector_count_; }
+		void set_verbose(bool var) { verbose_ = var; }
+		bool verbose() const { return verbose_; }
 
 	private:
 
@@ -143,7 +154,7 @@ public:
 			set_probe_reflected_output(probe_reflected_output);
 		}
 
-		bool brute_force(uint32_t search_poly_start, uint32_t search_poly_end, std::vector<test_vector_t> test_vectors);
+		bool brute_force(int thread, uint32_t search_poly_start, uint32_t search_poly_end, std::vector<test_vector_t> test_vectors);
 		int do_brute_force(int num_threads, std::vector<test_vector_t> test_vectors);
 
 };

@@ -159,16 +159,31 @@ BOOST_AUTO_TEST_CASE(crcSixteen)
 	BOOST_CHECK(crc.calc_crc(	0xFFFF, 			// Initial
 			    				msg,				// Data
 			    				0xF53F) == 1);		// Expected CRC
-/* TODO:
-92
-6B
-55
-0745
-FF
-FF
-FF
-FF
-1D0F*/
+
+	// Autosar Release 4.2.2 p.25 : 92 6B 55 : 0745
+	uint8_t data_3_5[] = {0x92, 0x6B, 0x55}; 
+	msg = convert_to_bitset(data_3_5, 3);
+	crc.set(0x1021, // Poly
+			0xffff, // Initial (Overwritten)
+			0x0000, // Final XOR
+			false,  // Reflect input
+			false); // Reflect output
+	BOOST_CHECK(crc.calc_crc(	0xFFFF, 			// Initial
+			    				msg,				// Data
+			    				0x0745) == 1);		// Expected CRC
+
+	// Autosar Release 4.2.2 p.25 : FF FF FF FF : 1D0F
+	uint8_t data_3_6[] = {0xFF, 0xFF, 0xFF, 0xFF}; 
+	msg = convert_to_bitset(data_3_6, 4);
+	crc.set(0x1021, // Poly
+			0xffff, // Initial (Overwritten)
+			0x0000, // Final XOR
+			false,  // Reflect input
+			false); // Reflect output
+	BOOST_CHECK(crc.calc_crc(	0xFFFF, 			// Initial
+			    				msg,				// Data
+			    				0x1D0F) == 1);		// Expected CRC
+
 }
 
 
