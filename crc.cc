@@ -1,4 +1,6 @@
 
+#include <iostream>
+
 #include <boost/dynamic_bitset.hpp>
 #include "crc.hpp"
 
@@ -64,6 +66,11 @@ my_crc_basic::value_type my_crc_basic::checksum() const {
 }
 
 
+void my_crc_basic::calc_crc(value_type const use_initial,
+				boost::dynamic_bitset<> const & msg) {
+	this->calc_crc(use_initial, msg, 0);
+}
+
 bool my_crc_basic::calc_crc(value_type const use_initial,
 			    boost::dynamic_bitset<> const& msg,
 			    value_type const expected_crc) {
@@ -72,13 +79,24 @@ bool my_crc_basic::calc_crc(value_type const use_initial,
 
 	if(rft_in_) {
 
-		for(size_t i = 0; i < msg.size(); i+=8) {
-			
+	if (msg.size() % 8 > 0)
+	{
+		for (int i = msg.size()-1; i >= 0; i--)
+		{
+			process_bit(msg[i]);
+		}
+	}
+	else
+	{
+
+		for(size_t i = 0; i < msg.size(); i+=8) 
+		{
 			// inverse feeding
 			for(int j = 1; j <= 8; j++)
 				process_bit(msg[i + 8 - j]);
-
 		}
+	}
+
 
 	}
 	else {
@@ -89,7 +107,6 @@ bool my_crc_basic::calc_crc(value_type const use_initial,
 		}
 
 	}
-
 	return checksum() == expected_crc;
 
 }
