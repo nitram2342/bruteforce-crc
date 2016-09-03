@@ -82,8 +82,8 @@ uint64_t bf_crc::get_delta_time_in_ms(struct timeval const& start) {
 
 void bf_crc::show_hit(uint32_t poly, uint32_t init, bool ref_in, bool ref_out) {
 
-  std::cout << std::endl
-    << "----------------------[ MATCH ]--------------------------------\n"
+  std::cout 
+    << "----------------------------[ MATCH ]--------------------------------\n"
     << "Found a model for the CRC calculation:\n"
     << "Truncated polynom : 0x" << std::hex << poly << " (" << std::dec << poly << ")\n"
     << "Initial value     : 0x" << std::hex << init << " (" << std::dec << init << ")\n"
@@ -91,7 +91,7 @@ void bf_crc::show_hit(uint32_t poly, uint32_t init, bool ref_in, bool ref_out) {
     << "Reflected input   : " << bool_to_str(ref_in) << "\n"
     << "Reflected output  : " << bool_to_str(ref_out) << "\n"
     //<< "Message offset    : from bit " << start_ << " .. " << end_ << " (end not included)\n"
-    << "\n";
+    << std::endl << std::flush;
 
 }
 
@@ -109,7 +109,7 @@ void bf_crc::print_stats(void) {
 		<< " done=" << (crc_counter*100.0/test_vector_count()) << "%"
 		<< " (" << number_to_str(crc_counter) << " of " << number_to_str(test_vector_count()) << ")"
 		<< " time_to_go=" <<  (test_vector_count() - crc_counter)/crcs_per_sec/3600 << " h"
-		<< "     ";
+		<< "     \r" << std::flush;
     }
   }
 
@@ -144,7 +144,7 @@ void bf_crc::print_settings(void)
 
 	std::cout << "Probe reflect in	: " << bool_to_str(probe_reflected_input_) << std::endl;
 	std::cout << "{robe reflect out	: " << bool_to_str(probe_reflected_output_) << std::endl;
-	std::cout << std::endl;	
+	std::cout << std::endl << std::flush;	
 }
 
 bool bf_crc::brute_force(int thread_number, uint32_t search_poly_start, uint32_t search_poly_end, std::vector<test_vector_t> test_vectors) {
@@ -156,7 +156,7 @@ bool bf_crc::brute_force(int thread_number, uint32_t search_poly_start, uint32_t
 		mymutex.lock();
 
 		// Thread information
-		std::cout << "Thread " << thread_number << " started, searching polynomial " << std::hex << search_poly_start << " to " << std::hex << search_poly_end << std::endl;
+//		std::cout << "Thread " << thread_number << " started, searching polynomial " << std::hex << search_poly_start << " to " << std::hex << search_poly_end << std::endl;
 
 		mymutex.unlock();
 	}
@@ -210,6 +210,7 @@ bool bf_crc::brute_force(int thread_number, uint32_t search_poly_start, uint32_t
 						// If match is true there were no errors, TODO: why checl m_i against test_vectors_size?
 						if(match == true && m_i == test_vectors.size()) {
 							show_hit(poly, init, probe_reflected_input ? true : false, probe_reflected_output ? true : false);
+							print_stats();
 						}
 
 					} // end for loop, initials
@@ -253,11 +254,12 @@ int bf_crc::do_brute_force(int num_threads, std::vector<test_vector_t> test_vect
 
 	if (verbose_)
 	{
+		std::cout << std::endl;
 		std::cout << "Multithreaded CRC Brute Force Initiated" << std::endl;
 		std::cout << "---------------------------------------" << std::endl;
 		std::cout << "Number of threads	: " << std::dec << num_threads << std::endl;
 		std::cout << "Number of test vectors	: " << std::dec << test_vectors.size() << std::endl;
-		std::cout << std::endl;
+		std::cout << std::endl << std::flush;
 	}
 
 	// Step through search space, assigning a batch of polynomials to each thread 

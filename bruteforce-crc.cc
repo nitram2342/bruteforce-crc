@@ -229,6 +229,7 @@ int main(int argc, char *argv[]) {
 	// Warn user when things are about to go wrong TODO: Needs to be make more cleaver...
   	if(((end-start) % 8 != 0) || (end - start == 0)) {
     	std::cout << std::endl << "Warning: input reflection only works if range start ... end is N * 8 bit with N > 0" << std::endl << std::endl; 
+		std::cout << std::flush;
 	}
 
 	crc_bruteforce = new bf_crc(crc_width, 			// CRC Width
