@@ -67,7 +67,6 @@ BOOST_AUTO_TEST_CASE(crcFive)
 	// 5 bit CRC's
 	uint8_t crc_width = 5;
 	crc_t crc(crc_width);
-	boost::dynamic_bitset<> msg;
 	uint32_t calculated_crc;
 
 	/*
@@ -129,9 +128,10 @@ BOOST_AUTO_TEST_CASE(crcFive)
 BOOST_AUTO_TEST_CASE(crcFourteen)
 {
 	// 14 bit CRC's
-	typedef boost::dynamic_bitset<> dbType;
-	crc_t crc(14);
-	dbType msg;
+	uint8_t crc_width = 14;
+	uint32_t calculated_crc;
+
+	crc_t crc(crc_width);
 
 	/*
 	 * CRC-14/DARC
@@ -140,27 +140,13 @@ BOOST_AUTO_TEST_CASE(crcFourteen)
 
 	// REVENG Test Check
 	uint8_t data_1_0[] = {0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39}; 
-	msg = convert_uint8_to_bitset(data_1_0, 9);
-	crc.set(0x0805, // Poly
-			0x0000, // Initial (Overwritten)
-			0x0000, // Final XOR
-			true,  // Reflect input
-			true); // Reflect output
-	BOOST_CHECK(crc.calc_crc(	0x0000, 			// Initial
-			    				msg,				// Data
-			    				0x082d) == 1);		// Expected CRC
+	calculated_crc = calculate_crc(crc_width, data_1_0, 9, 0x805, 0x0, 0x0, true, true);
+	BOOST_CHECK(calculated_crc == 0x82d);
 
 	// ETSI EN 300 751 - TODO: Needs Verification
 	uint8_t data_1_1[] = {0x02, 0x00, 0x01, 0x02, 0x37, 0x20, 0x50, 0x52, 0x4F, 0x4A, 0x45, 0x43, 0x54, 0x20, 0x4D, 0x41, 0x49, 0x4E, 0x4D, 0x45, 0x4E, 0x55}; 
-	msg = convert_uint8_to_bitset(data_1_1, 22);
-	crc.set(0x0805, // Poly
-			0x0000, // Initial (Overwritten)
-			0x0000, // Final XOR
-			true,  // Reflect input
-			true); // Reflect output
-	BOOST_CHECK(crc.calc_crc(	0x0000, 			// Initial
-			    				msg,				// Data
-			    				0x083B) == 1);		// Expected CRC
+	calculated_crc = calculate_crc(crc_width, data_1_1, sizeof(data_1_1), 0x805, 0x0, 0x0, true, true);
+	BOOST_CHECK(calculated_crc == 0x83B);
 
 }
 
@@ -168,9 +154,10 @@ BOOST_AUTO_TEST_CASE(crcFourteen)
 BOOST_AUTO_TEST_CASE(crcSixteen)
 {
 	// 16 bit CRC's
-	typedef boost::dynamic_bitset<> dbType;
-	crc_t crc(16);
-	dbType msg;
+	uint8_t crc_width = 16;
+	uint32_t calculated_crc;
+
+	crc_t crc(crc_width);
 
 	/*
 	 * ARC
@@ -178,16 +165,9 @@ BOOST_AUTO_TEST_CASE(crcSixteen)
 	 */
 
 	// REVENG Test Check
-	uint8_t data_1_0[] = {0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39}; 
-	msg = convert_uint8_to_bitset(data_1_0, 9);
-	crc.set(0x8005, // Poly
-			0x0000, // Initial (Overwritten)
-			0x0000, // Final XOR
-			true,  // Reflect input
-			true); // Reflect output
-	BOOST_CHECK(crc.calc_crc(	0x0000, 			// Initial
-			    				msg,				// Data
-			    				0xBB3D) == 1);		// Expected CRC
+	uint8_t data_1_0[] = {0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39};  
+	calculated_crc = calculate_crc(crc_width, data_1_0, sizeof(data_1_0), 0x8005, 0x0, 0x0, true, true);
+	BOOST_CHECK(calculated_crc == 0xBB3D);
 
 	/* 
 	 * CRC-16/CCITT-FALSE
@@ -195,89 +175,39 @@ BOOST_AUTO_TEST_CASE(crcSixteen)
 	 */
 
 	// Autosar Release 4.2.2 p.25 : 00 00 00 00 : 84C0
-	uint8_t data_3_0[] = {0x00, 0x00, 0x00, 0x00}; 
-	msg = convert_uint8_to_bitset(data_3_0, 4);
-	crc.set(0x1021, // Poly
-			0xffff, // Initial (Overwritten)
-			0x0000, // Final XOR
-			false,  // Reflect input
-			false); // Reflect output
-	BOOST_CHECK(crc.calc_crc(	0xFFFF, 			// Initial
-			    				msg,				// Data
-			    				0x84C0) == 1);		// Expected CRC
+	uint8_t data_3_0[] = {0x00, 0x00, 0x00, 0x00};  
+	calculated_crc = calculate_crc(crc_width, data_3_0, sizeof(data_3_0), 0x1021, 0xFFFF, 0x0, false, false);
+	BOOST_CHECK(calculated_crc == 0x84C0);
 
 	// Autosar Release 4.2.2 p.25 : F2 01 83 : D374
-	uint8_t data_3_1[] = {0xF2, 0x01, 0x83}; 
-	msg = convert_uint8_to_bitset(data_3_1, 3);
-	crc.set(0x1021, // Poly
-			0xffff, // Initial (Overwritten)
-			0x0000, // Final XOR
-			false,  // Reflect input
-			false); // Reflect output
-	BOOST_CHECK(crc.calc_crc(	0xFFFF, 			// Initial
-			    				msg,				// Data
-			    				0xD374) == 1);		// Expected CRC
+	uint8_t data_3_1[] = {0xF2, 0x01, 0x83};  
+	calculated_crc = calculate_crc(crc_width, data_3_1, sizeof(data_3_1), 0x1021, 0xFFFF, 0x0, false, false);
+	BOOST_CHECK(calculated_crc == 0xD374);
 
 	// Autosar Release 4.2.2 p.25 : 0F AA 00 55 : 2023
-	uint8_t data_3_2[] = {0x0F, 0xAA, 0x00, 0x55}; 
-	msg = convert_uint8_to_bitset(data_3_2, 4);
-	crc.set(0x1021, // Poly
-			0xffff, // Initial (Overwritten)
-			0x0000, // Final XOR
-			false,  // Reflect input
-			false); // Reflect output
-	BOOST_CHECK(crc.calc_crc(	0xFFFF, 			// Initial
-			    				msg,				// Data
-			    				0x2023) == 1);		// Expected CRC
+	uint8_t data_3_2[] = {0x0F, 0xAA, 0x00, 0x55};  
+	calculated_crc = calculate_crc(crc_width, data_3_2, sizeof(data_3_2), 0x1021, 0xFFFF, 0x0, false, false);
+	BOOST_CHECK(calculated_crc == 0x2023);
 
 	// Autosar Release 4.2.2 p.25 : 00 FF 55 11 : B8F9
-	uint8_t data_3_3[] = {0x00, 0xFF, 0x55, 0x11}; 
-	msg = convert_uint8_to_bitset(data_3_3, 4);
-	crc.set(0x1021, // Poly
-			0xffff, // Initial (Overwritten)
-			0x0000, // Final XOR
-			false,  // Reflect input
-			false); // Reflect output
-	BOOST_CHECK(crc.calc_crc(	0xFFFF, 			// Initial
-			    				msg,				// Data
-			    				0xB8F9) == 1);		// Expected CRC
-
+	uint8_t data_3_3[] = {0x00, 0xFF, 0x55, 0x11};  
+	calculated_crc = calculate_crc(crc_width, data_3_3, sizeof(data_3_3), 0x1021, 0xFFFF, 0x0, false, false);
+	BOOST_CHECK(calculated_crc == 0xB8F9);
 
 	// Autosar Release 4.2.2 p.25 : 33 22 55 AA BB CC DD EE FF : F53F
-	uint8_t data_3_4[] = {0x33, 0x22, 0x55, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF}; 
-	msg = convert_uint8_to_bitset(data_3_4, 9);
-	crc.set(0x1021, // Poly
-			0xffff, // Initial (Overwritten)
-			0x0000, // Final XOR
-			false,  // Reflect input
-			false); // Reflect output
-	BOOST_CHECK(crc.calc_crc(	0xFFFF, 			// Initial
-			    				msg,				// Data
-			    				0xF53F) == 1);		// Expected CRC
+	uint8_t data_3_4[] = {0x33, 0x22, 0x55, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF};  
+	calculated_crc = calculate_crc(crc_width, data_3_4, sizeof(data_3_4), 0x1021, 0xFFFF, 0x0, false, false);
+	BOOST_CHECK(calculated_crc == 0xF53F);
 
 	// Autosar Release 4.2.2 p.25 : 92 6B 55 : 0745
 	uint8_t data_3_5[] = {0x92, 0x6B, 0x55}; 
-	msg = convert_uint8_to_bitset(data_3_5, 3);
-	crc.set(0x1021, // Poly
-			0xffff, // Initial (Overwritten)
-			0x0000, // Final XOR
-			false,  // Reflect input
-			false); // Reflect output
-	BOOST_CHECK(crc.calc_crc(	0xFFFF, 			// Initial
-			    				msg,				// Data
-			    				0x0745) == 1);		// Expected CRC
+	calculated_crc = calculate_crc(crc_width, data_3_5, sizeof(data_3_5), 0x1021, 0xFFFF, 0x0, false, false);
+	BOOST_CHECK(calculated_crc == 0x0745); 
 
 	// Autosar Release 4.2.2 p.25 : FF FF FF FF : 1D0F
-	uint8_t data_3_6[] = {0xFF, 0xFF, 0xFF, 0xFF}; 
-	msg = convert_uint8_to_bitset(data_3_6, 4);
-	crc.set(0x1021, // Poly
-			0xffff, // Initial (Overwritten)
-			0x0000, // Final XOR
-			false,  // Reflect input
-			false); // Reflect output
-	BOOST_CHECK(crc.calc_crc(	0xFFFF, 			// Initial
-			    				msg,				// Data
-			    				0x1D0F) == 1);		// Expected CRC
+	uint8_t data_3_6[] = {0xFF, 0xFF, 0xFF, 0xFF};  
+	calculated_crc = calculate_crc(crc_width, data_3_6, sizeof(data_3_6), 0x1021, 0xFFFF, 0x0, false, false);
+	BOOST_CHECK(calculated_crc == 0x1D0F);
 
 }
 
