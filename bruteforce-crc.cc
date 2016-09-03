@@ -12,7 +12,6 @@
  *
  */
 
-
 #include <sys/time.h>
 #include <iostream>
 #include <fstream>
@@ -41,33 +40,6 @@ static std::vector<uint32_t> expected_crcs;
 unsigned int num_threads = 1;
 
 bool verbose = true;
- 
-void mark_crc(size_t offs_start, size_t width) {
-  size_t i, j;
-  for(i = 0; i < offs_start; i++) {
-    if(i> 0 && (i % 8 == 0)) 
-      std::cout << "  ";
-    else 
-      std::cout << " ";
-  }
-
-  for(j = i; j < i + width; j++) {
-    if(j> 0 && (j % 8 == 0)) 
-      std::cout << " -";
-    else 
-      std::cout << "-";
-  }
-  std::cout << "\n";
-}
-	    
-void print_message(boost::dynamic_bitset<> const& msg) {
-  for(size_t i = 0; i < msg.size(); i++) {
-    if((i > 0) && (i % 8 == 0)) std::cout << " ";
-    std::cout << (msg[i] ? "1" : "0");
-  }
-  std::cout << "\n";
-}
-
 
 /* --------------------------------------------------------------------------
 
