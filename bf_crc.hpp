@@ -1,5 +1,5 @@
 /*
- * Brute-force a CRC.
+ * Brute-force CRC based on known good vectors
  *
  * Original Author: Martin Schobert <schobert@sitsec.net>
  * Modified by MarytnP <git@disputedip.com>

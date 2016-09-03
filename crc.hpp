@@ -1,4 +1,8 @@
 /*
+ * Modified by MartynP <git@disputedip.com>
+ *
+ * The original header:
+ *
  * This is a stripped-down and partially modified version of Boost's CRC library.
  * I extracted the crc_basic class and removed the template parameter, because I
  * want to specify the original template parameter at run-time.

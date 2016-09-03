@@ -1,5 +1,6 @@
 /*
- * Brute-force a CRC.
+ * Front end application for brute-forcing CRC's of known good
+ * test vectors.
  *
  * Original Author: Martin Schobert <schobert@sitsec.net>
  * Modified by MarytnP <git@disputedip.com>
@@ -10,6 +11,8 @@
  *          http://www.boost.org/LICENSE_1_0.txt)
  *
  */
+
+
 #include <sys/time.h>
 #include <iostream>
 #include <fstream>
