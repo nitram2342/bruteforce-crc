@@ -36,7 +36,9 @@ namespace po = boost::program_options;
 static std::vector<uint32_t> expected_crcs;
 
 unsigned int num_threads = 1;
-	    
+
+bool verbose = true;
+ 
 void mark_crc(size_t offs_start, size_t width) {
   size_t i, j;
   for(i = 0; i < offs_start; i++) {
@@ -168,6 +170,8 @@ int main(int argc, char *argv[]) {
 	desc.add_options()
     ("help", "produce help message")
     ("file", po::value<std::string>(), "file containing messages")
+	("output", po::value<std::string>(), "output file for matched crc settings")
+	("verboce", po::value<bool>(), "verbose output")
     ("threads", po::value<unsigned int >(), "number of threads (default: 4)")
     ("width", po::value<size_t>(), "CRC width")
     ("offs-crc", po::value<size_t>(), "CRC's offset")
@@ -216,33 +220,16 @@ int main(int argc, char *argv[]) {
 		test_vectors = read_file(vm["file"].as<std::string>(), start, end-start, offs_crc, width);
 	}
 
-	// Define search space
+	if(vm.count("output")) {
+		// creare output file
+	}
+
+	// Define search space 
 	start_poly = poly > 0 ? poly : 0x0000;
 	end_poly = (poly > 0 ? poly : MAX_VALUE(width));
 
 	// Override non-conformal input
 	if (probe_initial) initial = 0;
-
-	// Output Brute Force Paramaters
-	std::cout 	<< "number of threads        : " << num_threads << std::endl
-			    << "width                    : " << width << " bits" << std::endl
-			    << "CRC's offset             : " << offs_crc << std::endl
-	    		<< "calc CRC for bit offsets : " << start << " .. " << end << " (not included)" << std::endl
-			    << "truncated polynom        : from " << start_poly << " to " << end_poly << " (MSB not shown)" << std::endl;
-
-	if (probe_initial)
-		std::cout << "initial value            : from 0 to " << MAX_VALUE(width) << std::endl;
-	else
-		std::cout << "initial value            : " << initial << std::endl;
-
-	if (probe_final_xor)
-		std::cout << "probe final xor          : " << bf_crc::bool_to_str(probe_final_xor) << std::endl;
-	else
-		std::cout << "final xor                : " << final_xor << std::endl;
-
-	std::cout	<< "probe reflect in         : " << bf_crc::bool_to_str(ref_in) << std::endl
-			    << "probe reflect out        : " << bf_crc::bool_to_str(ref_out) << std::endl
-			    << std::endl;
 
 	// Warn user when things are about to go wrong TODO: Needs to be make more cleaver...
   	if(((end-start) % 8 != 0) || (end - start == 0)) {
@@ -257,6 +244,8 @@ int main(int argc, char *argv[]) {
 								initial, 			// Initial
 								ref_in, 			// Probe Reflected Input?
 								ref_out);			// Probe Reflected Output?
+
+	crc_bruteforce->print_settings();
 
 	int found = crc_bruteforce->do_brute_force(4, test_vectors);
 

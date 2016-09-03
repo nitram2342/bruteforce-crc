@@ -59,6 +59,8 @@ class bf_crc {
 							probe_reflected_output);
 		}
 
+	void print_settings(void);
+
 	private: 
 		uint16_t crc_width_; 
 		uint32_t polynomial_; 

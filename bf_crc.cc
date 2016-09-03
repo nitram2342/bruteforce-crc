@@ -115,6 +115,38 @@ void bf_crc::print_stats(void) {
 
 }
 
+
+
+void bf_crc::print_settings(void)
+{
+
+	// Output Brute Force Settings
+	std::cout << "Brute Force CRC Settings" << std::endl;
+	std::cout << "------------------------" << std::endl;
+
+	std::cout << "CRC Width		: " << crc_width_ << std::endl;
+
+	std::cout << "Truncated Polynomial	";
+	if (polynomial_ > 0)
+		std::cout << ": 0x" << std::hex << polynomial_ << std::endl;
+	else
+		std::cout << ": 0x0 to 0x" << std::hex << MAX_VALUE(crc_width_) << std::endl;
+
+	if (probe_initial_)
+		std::cout << "Initial value		: 0x0 to 0x" << std::hex << MAX_VALUE(crc_width_) << std::endl;
+	else
+		std::cout << "Initial value		: " << std::hex << initial_ << std::endl;
+
+	if (probe_final_xor_)
+		std::cout << "Final xor		: 0x0 to 0x" << std::hex << MAX_VALUE(crc_width_) << std::endl;
+	else
+		std::cout << "final xor		: 0x" <<std::hex << final_xor_ << std::endl;
+
+	std::cout << "Probe reflect in	: " << bool_to_str(probe_reflected_input_) << std::endl;
+	std::cout << "{robe reflect out	: " << bool_to_str(probe_reflected_output_) << std::endl;
+	std::cout << std::endl;	
+}
+
 bool bf_crc::brute_force(int thread_number, uint32_t search_poly_start, uint32_t search_poly_end, std::vector<test_vector_t> test_vectors) {
 
 	// Verbose option only
