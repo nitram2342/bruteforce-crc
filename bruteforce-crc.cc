@@ -35,77 +35,67 @@
 
 namespace po = boost::program_options;
 
-static std::vector<uint32_t> expected_crcs;
-
-unsigned int num_threads = 1;
-
-bool verbose = true;
-
-/* --------------------------------------------------------------------------
-
-     Parsing files
-
-   --------------------------------------------------------------------------
-*/
-
+/*
+ * Parse a line from a text file for binary sequence
+ */
 boost::dynamic_bitset<> parse_line(std::string const& line) {
-  boost::dynamic_bitset<> bits;
 
-  //std::cout << "processing line: " << line << "\n";
-  static boost::regex exp1("^\\s*[10]+", boost::regex::perl|boost::regex::icase);
-  if(regex_match(line, exp1)) {
-    bits.resize(line.length());
+	boost::dynamic_bitset<> bits;
+	static boost::regex exp1("^\\s*[10]+", boost::regex::perl|boost::regex::icase);
 
-    for(size_t i = 0; i < line.length(); i++) {
-      char c = line.at(i);
-      if(c == '1') bits[i] = true;
-      else if(c == '0') bits[i] = false;
-      else goto done; // ignore garbage
-    }
-  }
-  
- done:
+	if(regex_match(line, exp1)) {
+		bits.resize(line.length());
+		for(size_t i = 0; i < line.length(); i++) {
+			char c = line.at(i);
+			if(c == '1') bits[i] = true;
+			else if(c == '0') bits[i] = false;
+			else break; // ignore garbage
+		}
+	}
 
-  return bits;
+	return bits;
 }
 
-std::vector<bf_crc::test_vector_t> read_file(std::string const& file, int32_t offset_message, int32_t message_length, int32_t offset_crc, int32_t crc_length) {
+/*
+ * Read a file of test vectors
+ * Each line is a binary sequence with a message of length (message_length) starting at zero indexed offset (offset_message)
+ * The CRC is of length (crc_length) located at zero indexed offset (offset_crc)
+ */
+std::vector<bf_crc::test_vector_t> read_file(std::string const& file, int32_t offset_message, int32_t message_length, int32_t offset_crc, int32_t crc_length, bool verbose) {
 
-  	std::vector<bf_crc::test_vector_t> test_vectors;
-
-  	std::ifstream ifs(file.c_str());
- 	std::string current_line;
+	std::vector<bf_crc::test_vector_t> test_vectors;
+	std::ifstream ifs(file.c_str());
+	std::string current_line;
     
-  	while(getline(ifs, current_line))
-	{
-
+	while(getline(ifs, current_line)) {
 		bf_crc::test_vector_t tv;
-		boost::dynamic_bitset<>  msg = parse_line(current_line);
-
+		boost::dynamic_bitset<> msg = parse_line(current_line);
 		boost::dynamic_bitset<> resized_msg;
-		resized_msg.resize(message_length);
 
+		resized_msg.resize(message_length);
 		int32_t bit = 0;
+
 		for(int32_t i = offset_message; i < offset_message + message_length; i++) {
 			resized_msg[bit++] = msg[i];
 		}
+
 		tv.message = resized_msg;
 
 		uint32_t crc = 0;
 		for(int32_t i = 0; i < crc_length; i++) {
-		  crc <<= 1;
-		  crc |= (msg[offset_crc + i] == true ? 1 : 0);
+			crc <<= 1;
+			crc |= (msg[offset_crc + i] == true ? 1 : 0);
 		}
 
-		printf("Extracted message with crc %04x\n", crc);
+		if (verbose) {
+			printf("Extracted message with crc %04x\n", crc);
+		}
+
 		tv.crc = crc;
-
 		test_vectors.push_back(tv);
-
 	}
 
-  return test_vectors;
-
+	return test_vectors;
 }
 
 /* --------------------------------------------------------------------------
@@ -126,6 +116,11 @@ int main(int argc, char *argv[]) {
 	size_t start = 0;
 	size_t end = offs_crc;
 
+	std::string output = "";
+	bool verbose = false;
+
+	int num_threads = 4;
+
 	uint32_t polynomial = 0;
 
 	bool reflected_input = false;
@@ -144,7 +139,7 @@ int main(int argc, char *argv[]) {
     ("help", "Produce help message")
     ("file", 					po::value<std::string>(), 		"File containing messages")
 	("output", 					po::value<std::string>(), 		"Output file for matched crc settings")
-	("verboce", 				po::value<bool>(), 				"Enable verbose output")
+	("verbose", 				po::value<bool>(), 				"Enable verbose output")
     ("threads", 				po::value<unsigned int >(), 	"Number of threads (default: 4)")
     ("width",					po::value<size_t>(), 			"CRC width")
     ("offs-crc", 				po::value<size_t>(), 			"CRC's offset")
@@ -171,6 +166,8 @@ int main(int argc, char *argv[]) {
 	}
 
 	// Load inputs to local variables
+	if(vm.count("output"))						output				= vm["output"].as<std::string>();
+	if(vm.count("verbose"))						verbose				= vm["verbose"].as<bool>();
 	if(vm.count("threads")) 					num_threads 		= vm["threads"].as<unsigned int>();
 	if(vm.count("width")) 						crc_width 			= vm["width"].as<size_t>();
 	if(vm.count("offs-crc"))	 				offs_crc 			= vm["offs-crc"].as<size_t>();
@@ -190,7 +187,7 @@ int main(int argc, char *argv[]) {
 	// Read messages from intput file
 	std::vector<bf_crc::test_vector_t> test_vectors;
  	if(vm.count("file")) {
-		test_vectors = read_file(vm["file"].as<std::string>(), start, end-start, offs_crc, crc_width);
+		test_vectors = read_file(vm["file"].as<std::string>(), start, end-start, offs_crc, crc_width, verbose);
 	}
 
 	// Set output file
@@ -218,9 +215,12 @@ int main(int argc, char *argv[]) {
 
 	crc_bruteforce->print_settings();
 
-	int found = crc_bruteforce->do_brute_force(4, test_vectors);
+	int found = crc_bruteforce->do_brute_force(num_threads, test_vectors);
 
-	std::cout << "\nNo model found.\n";
+	if (found > 0)
+		std::cout << "Found " << found << " matches." << std::endl << std::endl;
+	else
+		std::cout << "No model found." << std::endl << std::endl;
 
 	return 0;
 }

@@ -210,8 +210,15 @@ bool bf_crc::brute_force(int thread_number, uint32_t search_poly_start, uint32_t
 
 						// If match is true there were no errors, TODO: why checl m_i against test_vectors_size?
 						if(match == true && m_i == test_vectors.size()) {
+
+							mymutex.lock();
+							
 							show_hit(poly, init, probe_reflected_input ? true : false, probe_reflected_output ? true : false);
+							crc_match_t match = { poly, init, final_xor, int_to_bool(probe_reflected_input), int_to_bool(probe_reflected_output) };
+							crc_parameter_match_.push_back(match);
 							print_stats();
+
+							mymutex.unlock();
 						}
 
 					} // end for loop, initials
@@ -263,6 +270,9 @@ int bf_crc::do_brute_force(int num_threads, std::vector<test_vector_t> test_vect
 		std::cout << std::endl << std::flush;
 	}
 
+	// Clear the result store
+	crc_parameter_match_.clear();
+
 	// Step through search space, assigning a batch of polynomials to each thread 
 	// (poly_step polynomials per thread)
 	int thread_number = 0;
@@ -280,7 +290,7 @@ int bf_crc::do_brute_force(int num_threads, std::vector<test_vector_t> test_vect
 	// Wait for all threads to complete
 	pool.wait();
 
-return 0;
+	return crc_parameter_match_.size();
 
 }
 
