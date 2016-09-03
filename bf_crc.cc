@@ -251,10 +251,14 @@ int bf_crc::do_brute_force(int num_threads, std::vector<test_vector_t> test_vect
 	// Polystep is how the search polynomials are spread betweeen threads
 	int poly_step = polynomial_ > 0 ? 1 : MAX_VALUE(crc_width_)/num_threads;
 
-
-	std::cout << "poly_step: " << std::hex << poly_step << std::endl;
-	std::cout << "num_threads: " << std::hex << num_threads << std::endl;
-	std::cout << "MAX_VAL: " << std::hex << MAX_VALUE(crc_width_) << std::endl;
+	if (verbose_)
+	{
+		std::cout << "Multithreaded CRC Brute Force Initiated" << std::endl;
+		std::cout << "---------------------------------------" << std::endl;
+		std::cout << "Number of threads	: " << std::dec << num_threads << std::endl;
+		std::cout << "Number of test vectors	: " << std::dec << test_vectors.size() << std::endl;
+		std::cout << std::endl;
+	}
 
 	// Step through search space, assigning a batch of polynomials to each thread 
 	// (poly_step polynomials per thread)

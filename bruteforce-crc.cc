@@ -146,17 +146,15 @@ int main(int argc, char *argv[]) {
 
 	bf_crc *crc_bruteforce;
 
- 	size_t width = 16;
+ 	size_t crc_width = 16;
 	size_t offs_crc = 80;
 	size_t start = 0;
 	size_t end = offs_crc;
 
-	uint32_t poly = 0;
-	uint32_t start_poly = 0;
-	uint32_t end_poly = 0;
+	uint32_t polynomial = 0;
 
-	bool ref_in = false;
-	bool ref_out = false;
+	bool reflected_input = false;
+	bool reflected_output = false;
 
 	uint32_t initial = 0;
 	bool probe_initial = true;
@@ -168,22 +166,22 @@ int main(int argc, char *argv[]) {
 	// Boost program options to allow settings with call
 	po::options_description desc("Allowed options");
 	desc.add_options()
-    ("help", "produce help message")
-    ("file", po::value<std::string>(), "file containing messages")
-	("output", po::value<std::string>(), "output file for matched crc settings")
-	("verboce", po::value<bool>(), "verbose output")
-    ("threads", po::value<unsigned int >(), "number of threads (default: 4)")
-    ("width", po::value<size_t>(), "CRC width")
-    ("offs-crc", po::value<size_t>(), "CRC's offset")
-    ("start", po::value<size_t>(), "calculate CRC from this offset")
-    ("end", po::value<size_t>(), "calculate CRC up to this offset (not included)")
-	("initial", po::value<size_t>(), "set intial value (default: 0)")
-    ("probe-initial", po::value<bool>(), "bruteforce the intial, overrides initial (default: true)")
-    ("final-xor", po::value<uint32_t>(), "final xor (default: 0)")
-    ("probe-final-xor", po::value<bool>(), "bruteforce the final-xor, overrides final-xor (default: false)")
-    ("poly", po::value<uint32_t>(), "truncated poly (default: bruteforced)")
-    ("reflect-in", po::value<bool>(), "reflect input (default: false)")
-    ("reflect-out", po::value<bool>(), "reflect remainder output (default: false)")
+    ("help", "Produce help message")
+    ("file", 					po::value<std::string>(), 		"File containing messages")
+	("output", 					po::value<std::string>(), 		"Output file for matched crc settings")
+	("verboce", 				po::value<bool>(), 				"Enable verbose output")
+    ("threads", 				po::value<unsigned int >(), 	"Number of threads (default: 4)")
+    ("width",					po::value<size_t>(), 			"CRC width")
+    ("offs-crc", 				po::value<size_t>(), 			"CRC's offset")
+    ("start", 					po::value<size_t>(), 			"Calculate CRC from this offset")
+    ("end", 					po::value<size_t>(), 			"Calculate CRC up to this offset (not included)")
+	("initial", 				po::value<size_t>(), 			"Set intial value (default: 0)")
+    ("probe-initial", 			po::value<bool>(), 				"Bruteforce the intial, overrides initial (default: true)")
+    ("final-xor", 				po::value<uint32_t>(), 			"Final xor (default: 0)")
+    ("probe-final-xor",			po::value<bool>(), 				"Bruteforce the final-xor, overrides final-xor (default: false)")
+    ("poly", 					po::value<uint32_t>(), 			"Truncated polynomial (default: bruteforced)")
+    ("probe-reflected-input", 	po::value<bool>(), 				"Probe for reflect input (default: false)")
+    ("probe-reflected-output", 	po::value<bool>(), 				"Probe for reflect remainder output (default: false)")
     ;
 
 	// Parse programm options
@@ -198,35 +196,32 @@ int main(int argc, char *argv[]) {
 	}
 
 	// Load inputs to local variables
-	if(vm.count("threads")) num_threads = vm["threads"].as<unsigned int>();
-	if(vm.count("width")) width = vm["width"].as<size_t>();
-	if(vm.count("offs-crc")) offs_crc = vm["offs-crc"].as<size_t>();
-	if(vm.count("start")) start = vm["start"].as<size_t>();
-	if(vm.count("end")) end = vm["end"].as<size_t>();
-	if(vm.count("initial")) initial = vm["initial"].as<uint32_t>();
-	if(vm.count("probe-initial")) probe_initial = vm["probe-initial"].as<bool>();
-	if(vm.count("final-xor")) final_xor = vm["final-xor"].as<uint32_t>();
-	if(vm.count("probe-final-xor")) probe_final_xor = vm["probe-final-xor"].as<bool>();
-	if(vm.count("poly")) poly = vm["poly"].as<uint32_t>();
-	if(vm.count("reflect-in")) ref_in = vm["reflect-in"].as<bool>();
-	if(vm.count("reflect-out")) ref_out = vm["reflect-out"].as<bool>();
+	if(vm.count("threads")) 					num_threads 		= vm["threads"].as<unsigned int>();
+	if(vm.count("width")) 						crc_width 			= vm["width"].as<size_t>();
+	if(vm.count("offs-crc"))	 				offs_crc 			= vm["offs-crc"].as<size_t>();
+	if(vm.count("start")) 						start 				= vm["start"].as<size_t>();
+	if(vm.count("end")) 						end 				= vm["end"].as<size_t>();
+	if(vm.count("initial")) 					initial 			= vm["initial"].as<uint32_t>();
+	if(vm.count("probe-initial")) 				probe_initial 		= vm["probe-initial"].as<bool>();
+	if(vm.count("final-xor")) 					final_xor			= vm["final-xor"].as<uint32_t>();
+	if(vm.count("probe-final-xor")) 			probe_final_xor		= vm["probe-final-xor"].as<bool>();
+	if(vm.count("poly")) 						polynomial			= vm["poly"].as<uint32_t>();
+	if(vm.count("probe-reflected-input")) 		reflected_input		= vm["reflect-in"].as<bool>();
+	if(vm.count("probe-reflected-output"))	 	reflected_output	= vm["reflect-out"].as<bool>();
 
 	// Check parameters TODO: A lot more checking
-	if(width > 16) { std::cout << "maximum value for width is: 16\n"; exit(1); } // Why 16?
+	if(crc_width > 16) { std::cout << "maximum value for width is: 16\n"; exit(1); } // Why 16?
 
 	// Read messages from intput file
 	std::vector<bf_crc::test_vector_t> test_vectors;
  	if(vm.count("file")) {
-		test_vectors = read_file(vm["file"].as<std::string>(), start, end-start, offs_crc, width);
+		test_vectors = read_file(vm["file"].as<std::string>(), start, end-start, offs_crc, crc_width);
 	}
 
+	// Set output file
 	if(vm.count("output")) {
-		// creare output file
+		
 	}
-
-	// Define search space 
-	start_poly = poly > 0 ? poly : 0x0000;
-	end_poly = (poly > 0 ? poly : MAX_VALUE(width));
 
 	// Override non-conformal input
 	if (probe_initial) initial = 0;
@@ -236,37 +231,18 @@ int main(int argc, char *argv[]) {
     	std::cout << std::endl << "Warning: input reflection only works if range start ... end is N * 8 bit with N > 0" << std::endl << std::endl; 
 	}
 
-	crc_bruteforce = new bf_crc(width, 				// CRC Width
-								poly, 				// Polynomial
+	crc_bruteforce = new bf_crc(crc_width, 			// CRC Width
+								polynomial, 		// Polynomial
 								probe_final_xor, 	// Probe Final XOR?
 								final_xor, 			// Final XOR
 								probe_initial,   	// Probe Initial?
 								initial, 			// Initial
-								ref_in, 			// Probe Reflected Input?
-								ref_out);			// Probe Reflected Output?
+								reflected_input, 	// Probe Reflected Input?
+								reflected_output);	// Probe Reflected Output?
 
 	crc_bruteforce->print_settings();
 
 	int found = crc_bruteforce->do_brute_force(4, test_vectors);
-
-
-/*
-	int found = crc_bruteforce->do_brute_force(	width,
-												poly,
-												start_poly,
-												end_poly,
-												num_threads,
-												final_xor,
-												initial,
-												start,
-												end,
-												msg_list,
-												expected_crcs,
-												probe_final_xor,
-												probe_initial,
-												ref_in,
-												ref_out);
-*/
 
 	std::cout << "\nNo model found.\n";
 
