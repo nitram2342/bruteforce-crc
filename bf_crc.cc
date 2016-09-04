@@ -150,22 +150,9 @@ void bf_crc::print_settings(void)
 
 bool bf_crc::brute_force(int thread_number, uint32_t search_poly_start, uint32_t search_poly_end, std::vector<test_vector_t> test_vectors) {
 
-	// Verbose option only
-	if (verbose_)
-	{
-		// Lock mutex to avoid garbled std_out
-		mymutex.lock();
-
-		// Thread information
-//		std::cout << "Thread " << thread_number << " started, searching polynomial " << std::hex << search_poly_start << " to " << std::hex << search_poly_end << std::endl;
-
-		mymutex.unlock();
-	}
-
 	// Otherwise the returned list is going to take up a LOT of RAM
 	assert(test_vectors.size() > 0);
 
-	// Get a CRC checker
 	crc_t crc(crc_width_);
 
 	// Initial value defaults to 0
@@ -204,7 +191,7 @@ bool bf_crc::brute_force(int thread_number, uint32_t search_poly_start, uint32_t
 						bool match = true;
 						size_t m_i;
 
-						// Over all test vectirs, test to see if CRC settings wor
+						// Over all test vectirs, test to see if CRC settings work
 						for(m_i = 0; match && (m_i < test_vectors.size()); m_i++)
 							match = crc.calc_crc(init, test_vectors[m_i].message, test_vectors[m_i].crc);
 
@@ -212,8 +199,9 @@ bool bf_crc::brute_force(int thread_number, uint32_t search_poly_start, uint32_t
 						if(match == true && m_i == test_vectors.size()) {
 
 							mymutex.lock();
-							
-							show_hit(poly, init, probe_reflected_input ? true : false, probe_reflected_output ? true : false);
+
+							if (verbose))	
+								show_hit(poly, init, probe_reflected_input ? true : false, probe_reflected_output ? true : false);
 							crc_match_t match = { poly, init, final_xor, int_to_bool(probe_reflected_input), int_to_bool(probe_reflected_output) };
 							crc_parameter_match_.push_back(match);
 							print_stats();
@@ -223,17 +211,14 @@ bool bf_crc::brute_force(int thread_number, uint32_t search_poly_start, uint32_t
 
 					} // end for loop, initials
 
-					// Lock the mutex, blocks until mutex avaliable
 					mymutex.lock();
 
-					// Increase counter by initial's being checkeD 
 					crc_counter += init_to_check;
 
 					// TODO: is this a good way to do this?
 					if(probe_final_xor_ || (poly % 0x80 == 0))
 						print_stats();
 
-					// Unlock the mutex
 					mymutex.unlock();
 
 				} // end for loop, final_xor
@@ -276,6 +261,8 @@ int bf_crc::do_brute_force(int num_threads, std::vector<test_vector_t> test_vect
 
 	// Clear the result store
 	crc_parameter_match_.clear();
+
+	// TODO: Search all known CRC combinations first
 
 	// Step through search space, assigning a batch of polynomials to each thread 
 	// (poly_step polynomials per thread)

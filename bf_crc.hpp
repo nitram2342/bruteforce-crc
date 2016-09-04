@@ -57,6 +57,7 @@ class bf_crc {
 							initial, 
 							probe_reflected_input, 
 							probe_reflected_output);
+			crc_model_match_.clear();
 		}
 
 	void print_settings(void);
@@ -74,7 +75,7 @@ class bf_crc {
 		uint64_t test_vector_count_;
 		bool verbose_;
 
-		std::vector<crc_match_t> crc_parameter_match_;
+		std::vector<crc_match_t> crc_model_match_;
 
 	public: 
 		void set_crc_width(uint16_t var) { crc_width_ = var; update_test_vector_count(); }
@@ -98,7 +99,7 @@ class bf_crc {
 		void set_verbose(bool var) { verbose_ = var; }
 		bool verbose() const { return verbose_; }
 
-		std::vector<crc_match_t> crc_parameter_match() const { return crc_parameter_match_; }
+		std::vector<crc_match_t> crc_model_match() const { return crc_model_match_; }
 
 	private:
 
@@ -167,6 +168,8 @@ class bf_crc {
 							uint32_t search_poly_end, 
 							std::vector<test_vector_t> test_vectors);
 		int do_brute_force(int num_threads, std::vector<test_vector_t> test_vectors);
+
+		bool save_models_to_file(std::string filename);
 
 };
 
