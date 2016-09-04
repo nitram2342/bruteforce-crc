@@ -28,3 +28,9 @@ Check for errors and install missing dependencies.
 
 > make
 
+Build bruteforce-crc and ./bin/test*
+
+> make test
+
+Run tests (can take a long time) 
+
