@@ -213,8 +213,8 @@ int main(int argc, char *argv[]) {
 								reflected_input, 	// Probe Reflected Input?
 								reflected_output);	// Probe Reflected Output?
 
-	crc_bruteforce->print_settings();
-
+	crc_bruteforce->set_verbose(verbose);
+		
 	int found = crc_bruteforce->do_brute_force(num_threads, test_vectors);
 
 	if (found > 0)

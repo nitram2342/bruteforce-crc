@@ -262,6 +262,10 @@ int bf_crc::do_brute_force(int num_threads, std::vector<test_vector_t> test_vect
 
 	if (verbose_)
 	{
+		// Show the current settings
+		print_settings();
+
+		// And this specific run's settings
 		std::cout << std::endl;
 		std::cout << "Multithreaded CRC Brute Force Initiated" << std::endl;
 		std::cout << "---------------------------------------" << std::endl;
