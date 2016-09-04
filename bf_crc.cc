@@ -200,10 +200,10 @@ bool bf_crc::brute_force(int thread_number, uint32_t search_poly_start, uint32_t
 
 							mymutex.lock();
 
-							if (verbose))	
+							if (verbose_)	
 								show_hit(poly, init, probe_reflected_input ? true : false, probe_reflected_output ? true : false);
 							crc_match_t match = { poly, init, final_xor, int_to_bool(probe_reflected_input), int_to_bool(probe_reflected_output) };
-							crc_parameter_match_.push_back(match);
+							crc_model_match_.push_back(match);
 							print_stats();
 
 							mymutex.unlock();
@@ -260,7 +260,7 @@ int bf_crc::do_brute_force(int num_threads, std::vector<test_vector_t> test_vect
 	}
 
 	// Clear the result store
-	crc_parameter_match_.clear();
+	crc_model_match_.clear();
 
 	// TODO: Search all known CRC combinations first
 
@@ -281,7 +281,7 @@ int bf_crc::do_brute_force(int num_threads, std::vector<test_vector_t> test_vect
 	// Wait for all threads to complete
 	pool.wait();
 
-	return crc_parameter_match_.size();
+	return crc_model_match_.size();
 
 }
 
