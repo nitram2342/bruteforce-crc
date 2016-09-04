@@ -17,6 +17,7 @@
 #include "../crc.hpp"
 
 typedef my_crc_basic crc_t;
+uint8_t default_data[] = {0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39};
 
 boost::dynamic_bitset<> convert_uint8_to_bitset(const uint8_t array[], size_t size) {
 
@@ -59,9 +60,45 @@ uint32_t calculate_crc(uint32_t crc_width, std::string data, uint32_t polynomial
 	return crc.checksum();
 }
 	
+BOOST_AUTO_TEST_CASE(crcThree) {
 
-BOOST_AUTO_TEST_CASE(crcFive)
-{
+	// 3 bit CRC's
+	uint8_t crc_width = 3;
+	crc_t crc(crc_width);
+	uint32_t calculated_crc;
+
+	/*
+	 * CRC-3/ROHC
+	 * width=3 poly=0x3 init=0x7 refin=true refout=true xorout=0x0 check=0x6 name="CRC-3/ROHC"
+	 */
+	calculated_crc = calculate_crc(crc_width, default_data, sizeof(default_data), 0x3, 0x7, 0x0, true, true);
+	BOOST_CHECK(calculated_crc == 0x6);
+}
+
+BOOST_AUTO_TEST_CASE(crcFour) {
+
+	// 4 bit CRC's
+	uint8_t crc_width = 4;
+	crc_t crc(crc_width);
+	uint32_t calculated_crc;
+
+	/*
+ 	 * CRC-4/INTERLAKEN
+ 	 * width=4 poly=0x3 init=0xf refin=false refout=false xorout=0xf check=0xb name="CRC-4/INTERLAKEN"
+ 	 */
+	calculated_crc = calculate_crc(crc_width, default_data, sizeof(default_data), 0x3, 0xF, 0xF, false, false);
+	BOOST_CHECK(calculated_crc == 0xB);
+
+	/*
+	 * CRC-4/ITU
+	 * width=4 poly=0x3 init=0x0 refin=true refout=true xorout=0x0 check=0x7 name="CRC-4/ITU"
+	 */
+	calculated_crc = calculate_crc(crc_width, default_data, sizeof(default_data), 0x3, 0x0, 0x0, true, true);
+	BOOST_CHECK(calculated_crc == 0x7);
+
+}
+
+BOOST_AUTO_TEST_CASE(crcFive) {
 	// 5 bit CRC's
 	uint8_t crc_width = 5;
 	crc_t crc(crc_width);
@@ -73,8 +110,7 @@ BOOST_AUTO_TEST_CASE(crcFive)
 	 */
 
 	// REVENG Test Check
-	uint8_t data_1_0[] = {0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39};
-	calculated_crc = calculate_crc(crc_width, data_1_0, 9, 0x9, 0x9, 0x0, false, false);
+	calculated_crc = calculate_crc(crc_width, default_data, sizeof(default_data), 0x9, 0x9, 0x0, false, false);
 	BOOST_CHECK(calculated_crc == 0x00);
 
 	// High Security FeRAM-Based EPC C2G2 UHF (https://etrij.etri.re.kr/etrij/journal/getPublishedPaperFile.do?fileId=SPF-1228283393442)
@@ -122,6 +158,127 @@ BOOST_AUTO_TEST_CASE(crcFive)
 	BOOST_CHECK(calculated_crc == 0x017);
 
 }
+
+BOOST_AUTO_TEST_CASE(crcSix) {
+
+	// 6 bit CRC's
+	uint8_t crc_width = 6;
+	crc_t crc(crc_width);
+	uint32_t calculated_crc;
+
+	/*
+ 	 * CRC-6/CDMA2000-A
+ 	 * width=6 poly=0x27 init=0x3f refin=false refout=false xorout=0x00 check=0x0d name="CRC-6/CDMA2000-A"
+ 	 */
+	
+	// REVENG Test Check
+	calculated_crc = calculate_crc(crc_width, default_data, sizeof(default_data), 0x27, 0x3F, 0x00, false, false);
+	BOOST_CHECK(calculated_crc == 0x0D);
+
+	// Test 1 - https://www.lammertbies.nl/forum/viewtopic.php?t=1702 
+	// 0xC101002E - 26 bits data, 6 bits CRC
+	calculated_crc = calculate_crc(crc_width, "11000001000000010000000000", 0x27, 0x3F, 0x00, false, false);
+	BOOST_CHECK(calculated_crc == 0x2E);
+
+	// Test 2 - https://www.lammertbies.nl/forum/viewtopic.php?t=1702 
+	// 0x0110000F - 26 bits data, 6 bits CRC
+	calculated_crc = calculate_crc(crc_width, "00000001000100000000000000", 0x27, 0x3F, 0x00, false, false);
+	BOOST_CHECK(calculated_crc == 0x0F);
+
+	// Test 3 - https://www.lammertbies.nl/forum/viewtopic.php?t=1702 
+	// 0x05100009 - 26 bits data, 6 bits CRC
+	calculated_crc = calculate_crc(crc_width, "00000101000100000000000000", 0x27, 0x3F, 0x00, false, false);
+	BOOST_CHECK(calculated_crc == 0x09);
+
+	/*
+	 * CRC-6/CDMA2000-B
+	 * width=6 poly=0x07 init=0x3f refin=false refout=false xorout=0x00 check=0x3b name="CRC-6/CDMA2000-B"
+	 */
+	
+	// REVENG Test Check
+	calculated_crc = calculate_crc(crc_width, default_data, sizeof(default_data), 0x7, 0x3F, 0x0, false, false);
+	BOOST_CHECK(calculated_crc == 0x3B);
+
+	/*
+	 * CRC-6/DARC
+	 * width=6 poly=0x19 init=0x00 refin=true refout=true xorout=0x00 check=0x26 name="CRC-6/DARC"
+	 */
+
+	// REVENG Test Check
+	calculated_crc = calculate_crc(crc_width, default_data, sizeof(default_data), 0x19, 0x00, 0x00, true, true);
+	BOOST_CHECK(calculated_crc == 0x26);
+
+	// ETSI EN 300 751
+	// Test Vector 1 => 1001010011000100, bits are transmitted LSB first (lsb is leftmost in this example)
+	// Data: LSB 100100011 MSB
+	// CRC: LSB 000100 MSB
+	// Data and CRC are fed in lsb first, however the definitition stated reflected input and output
+	// Data and CRC should be reversed for the check in order to work
+	/*
+     = CAB8
+    00001100010000000010000000101101 = 300204B4*/
+
+	calculated_crc = calculate_crc(crc_width, "1100101001", 0x19, 0x00, 0x00, true, true);
+	BOOST_CHECK(calculated_crc == 0x08);
+
+	// ETSI EN 300 751
+	// Test Vector 2 => 0101001100 011101
+	// Reversed: 0011001010 101110
+	calculated_crc = calculate_crc(crc_width, "0011001010", 0x19, 0x00, 0x00, true, true);
+	BOOST_CHECK(calculated_crc == 0x2E);
+
+	// ETSI EN 300 751
+	// Test Vector 3 => 00001100010000000010000000 101101 
+	// Reversed: 00000001000000001000110000 101101
+	// TODO: This one does not work...
+	/*
+	calculated_crc = calculate_crc(crc_width, "00001100010000000010000000", 0x19, 0x00, 0x00, false, false);
+std::cout << std::hex << calculated_crc <<std::endl;
+	BOOST_CHECK(calculated_crc == 0x13);
+	*/
+
+	/*
+	 * CRC-6/ITU
+	 * width=6 poly=0x03 init=0x00 refin=true refout=true xorout=0x00 check=0x06 name="CRC-6/ITU"
+	 */
+
+	// REVENG Test Check
+	calculated_crc = calculate_crc(crc_width, default_data, sizeof(default_data), 0x03, 0x00, 0x00, true, true);
+	BOOST_CHECK(calculated_crc == 0x06);
+
+}
+
+BOOST_AUTO_TEST_CASE(crcSeven) {
+
+	// 7 bit CRC's
+	uint8_t crc_width = 7;
+	crc_t crc(crc_width);
+	uint32_t calculated_crc;
+
+	/*
+ 	 * CRC-7
+ 	 * width=7 poly=0x09 init=0x00 refin=false refout=false xorout=0x00 check=0x75 name="CRC-7"
+ 	 */
+	calculated_crc = calculate_crc(crc_width, default_data, sizeof(default_data), 0x09, 0x0, 0x0, false, false);
+	BOOST_CHECK(calculated_crc == 0x75);
+
+	/*
+	 * CRC-7/ROHC
+	 * width=7 poly=0x4f init=0x7f refin=true refout=true xorout=0x00 check=0x53 name="CRC-7/ROHC"
+	 */
+	calculated_crc = calculate_crc(crc_width, default_data, sizeof(default_data), 0x4F, 0x7F, 0x0, true, true);
+	BOOST_CHECK(calculated_crc == 0x53);
+
+	/*
+	 * CRC-7/UMTS
+	 * width=7 poly=0x45 init=0x00 refin=false refout=false xorout=0x00 check=0x61 name="CRC-7/UMTS"
+	 */
+	calculated_crc = calculate_crc(crc_width, default_data, sizeof(default_data), 0x45, 0x0, 0x0, false, false);
+	BOOST_CHECK(calculated_crc == 0x61);
+
+
+}
+
 
 BOOST_AUTO_TEST_CASE(crcFourteen)
 {
