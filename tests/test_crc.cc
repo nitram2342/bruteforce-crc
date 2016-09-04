@@ -279,7 +279,145 @@ BOOST_AUTO_TEST_CASE(crcSeven) {
 
 }
 
+BOOST_AUTO_TEST_CASE(crcEight) {
 
+	// 8 bit CRC's
+	uint8_t crc_width = 8;
+	crc_t crc(crc_width);
+	uint32_t calculated_crc;
+
+	/*
+ 	 * CRC-8
+ 	 * width=8 poly=0x07 init=0x00 refin=false refout=false xorout=0x00 check=0xf4 name="CRC-8"
+ 	 */
+	calculated_crc = calculate_crc(crc_width, default_data, sizeof(default_data), 0x07, 0x0, 0x0, false, false);
+	BOOST_CHECK(calculated_crc == 0xF4);
+
+	// 'Firmware CRC-8 implementations for SMBus'
+	calculated_crc = calculate_crc(crc_width, "01011100", 0x07, 0x0, 0x0, false, false);
+	BOOST_CHECK(calculated_crc == 0x93);
+
+	/*
+	 * CRC-8/AUTOSAR
+	 * width=8 poly=0x2f init=0xff refin=false refout=false xorout=0xff check=0xdf name="CRC-8/AUTOSAR"
+	 */
+	calculated_crc = calculate_crc(crc_width, default_data, sizeof(default_data), 0x2F, 0xFF, 0xFF, false, false);
+	BOOST_CHECK(calculated_crc == 0xDF);
+
+	// AUTOSAR Release 4.2.2
+	// Test Vector 1
+	uint8_t data_3_1[] = {0x00, 0x00, 0x00, 0x00};
+	calculated_crc = calculate_crc(crc_width, data_3_1, sizeof(data_3_1), 0x2F, 0xFF, 0xFF, false, false);
+	BOOST_CHECK(calculated_crc == 0x12);
+
+	// AUTOSAR Release 4.2.2
+	// Test Vector 2
+	uint8_t data_3_2[] = {0xF2, 0x01, 0x83};
+	calculated_crc = calculate_crc(crc_width, data_3_2, sizeof(data_3_2), 0x2F, 0xFF, 0xFF, false, false);
+	BOOST_CHECK(calculated_crc == 0xC2);
+
+ 	// AUTOSAR Release 4.2.2
+	// Test Vector 3
+	uint8_t data_3_3[] = {0x0F, 0xAA, 0x00, 0x55};
+ 	calculated_crc = calculate_crc(crc_width, data_3_3, sizeof(data_3_3), 0x2F, 0xFF, 0xFF, false, false);
+	BOOST_CHECK(calculated_crc == 0xC6);
+
+ 	// AUTOSAR Release 4.2.2
+	// Test Vector 4
+	uint8_t data_3_4[] = {0x00, 0xFF, 0x55, 0x11};
+	calculated_crc = calculate_crc(crc_width, data_3_4, sizeof(data_3_4), 0x2F, 0xFF, 0xFF, false, false);
+	BOOST_CHECK(calculated_crc == 0x77);
+
+
+ 	// AUTOSAR Release 4.2.2
+	// Test Vector 5
+	uint8_t data_3_5[] = {0x33, 0x22, 0x55, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF};
+	calculated_crc = calculate_crc(crc_width, data_3_5, sizeof(data_3_5), 0x2F, 0xFF, 0xFF, false, false);
+	BOOST_CHECK(calculated_crc == 0x11);
+
+
+ 	// AUTOSAR Release 4.2.2
+	// Test Vector 6
+	uint8_t data_3_6[] = {0x92, 0x6B, 0x55};
+	calculated_crc = calculate_crc(crc_width, data_3_6, sizeof(data_3_6), 0x2F, 0xFF, 0xFF, false, false);
+	BOOST_CHECK(calculated_crc == 0x33);
+
+
+ 	// AUTOSAR Release 4.2.2
+	// Test Vector 7
+	uint8_t data_3_7[] = {0xFF, 0xFF, 0xFF, 0xFF};
+	calculated_crc = calculate_crc(crc_width, data_3_7, sizeof(data_3_7), 0x2F, 0xFF, 0xFF, false, false);
+	BOOST_CHECK(calculated_crc == 0x6C);
+
+	/*
+	 * CRC-8/CDMA2000
+	 * width=8 poly=0x9b init=0xff refin=false refout=false xorout=0x00 check=0xda name="CRC-8/CDMA2000"
+	 */
+	calculated_crc = calculate_crc(crc_width, default_data, sizeof(default_data), 0x9B, 0xFF, 0x00, false, false);
+	BOOST_CHECK(calculated_crc == 0xDA);
+
+	/*
+	 * CRC-8/DARC
+	 * width=8 poly=0x39 init=0x00 refin=true refout=true xorout=0x00 check=0x15 name="CRC-8/DARC"
+	 */
+	calculated_crc = calculate_crc(crc_width, default_data, sizeof(default_data), 0x39, 0x00, 0x00, true, true);
+	BOOST_CHECK(calculated_crc == 0x15);
+
+	// ETSI EN 300 751
+	// 0000000100000011 11010111 = 80C0EB
+	uint8_t data_5_1[] = {0x80, 0xC0};
+	calculated_crc = calculate_crc(crc_width, data_5_1, sizeof(data_5_1), 0x39, 0x00, 0x00, true, true);
+	BOOST_CHECK(calculated_crc == 0xEB);
+
+	/*
+ 	 * CRC-8/DVB-S2
+ 	 * width=8 poly=0xd5 init=0x00 refin=false refout=false xorout=0x00 check=0xbc name="CRC-8/DVB-S2"
+ 	 */
+	calculated_crc = calculate_crc(crc_width, default_data, sizeof(default_data), 0xD5, 0x00, 0x00, false, false);
+	BOOST_CHECK(calculated_crc == 0xBC);
+
+	// OpenSAFETY Safety Profie Specification Working Draft Propsal Version 1.4.0
+	uint8_t data_6_1[] = {0x22, 0xC8, 0x12, 0x56, 0x30, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88};
+	calculated_crc = calculate_crc(crc_width, data_6_1, sizeof(data_6_1), 0xD5, 0x00, 0x00, false, false);
+	BOOST_CHECK(calculated_crc == 0x4F);
+
+	/*
+	 * CRC-8/EBU
+	 * width=8 poly=0x1d init=0xff refin=true refout=true xorout=0x00 check=0x97 name="CRC-8/EBU"
+	 */
+	calculated_crc = calculate_crc(crc_width, default_data, sizeof(default_data), 0x1D, 0xff, 0x00, true, true);
+	BOOST_CHECK(calculated_crc == 0x97);
+
+ 	// Tech 3250: Specification of the audio interface, 3rd edition
+ 	// Test Vector 1
+	uint8_t data_7_1[] = {0x3D, 0x02, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}; 
+	calculated_crc = calculate_crc(crc_width, data_7_1, sizeof(data_7_1), 0x1D, 0xff, 0x00, true, true);
+	BOOST_CHECK(calculated_crc == 0x9B);
+
+ 	// Tech 3250: Specification of the audio interface, 3rd edition
+ 	// Test Vector 2
+    uint8_t data_7_2[] = {0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+	calculated_crc = calculate_crc(crc_width, data_7_2, sizeof(data_7_2), 0x1D, 0xff, 0x00, true, true);
+	BOOST_CHECK(calculated_crc == 0x32);
+
+
+#if 0
+	/*
+	 * CRC-7/ROHC
+	 * width=7 poly=0x4f init=0x7f refin=true refout=true xorout=0x00 check=0x53 name="CRC-7/ROHC"
+	 */
+	calculated_crc = calculate_crc(crc_width, default_data, sizeof(default_data), 0x4F, 0x7F, 0x0, true, true);
+	BOOST_CHECK(calculated_crc == 0x53);
+
+	/*
+	 * CRC-7/UMTS
+	 * width=7 poly=0x45 init=0x00 refin=false refout=false xorout=0x00 check=0x61 name="CRC-7/UMTS"
+	 */
+	calculated_crc = calculate_crc(crc_width, default_data, sizeof(default_data), 0x45, 0x0, 0x0, false, false);
+	BOOST_CHECK(calculated_crc == 0x61);
+#endif
+
+}
 BOOST_AUTO_TEST_CASE(crcFourteen)
 {
 	// 14 bit CRC's
