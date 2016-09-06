@@ -16,34 +16,16 @@
 
 #include "../crc.hpp"
 
+// For dynamic bitset conversions only
+#include "../bf_crc.hpp"
+
 typedef my_crc_basic crc_t;
 uint8_t default_data[] = {0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39};
-
-boost::dynamic_bitset<> convert_uint8_to_bitset(const uint8_t array[], size_t size) {
-
-	boost::dynamic_bitset<> retVal(size*8);
-
-	for (unsigned int i = 0; i < size; i++)
-		for (int j = 0; j < 8; j++)
-			retVal[i*8+j] = (array[i] >> (7-j)) & 0x1 ? true : false;
-
-	return retVal;
-}
-
-boost::dynamic_bitset<> convert_string_to_bitset(std::string str)
-{
-	boost::dynamic_bitset<> retVal(str.length());
-
-	for (size_t i = 0; i < str.length(); i++)
-		retVal[i] = str[i] == '1' ? true : false;
-
-	return retVal;
-}
 
 uint32_t calculate_crc(uint32_t width, const uint8_t* data, size_t length, uint32_t polynomial, uint32_t initial, uint32_t final_xor, bool reflected_input, bool reflected_output)
 {
 	crc_t crc(width);
-	boost::dynamic_bitset<> msg = convert_uint8_to_bitset(data, length);
+	boost::dynamic_bitset<> msg = bf_crc::convert_uint8_to_bitset(data, length);
 
 	crc.set(polynomial, initial, final_xor, reflected_input, reflected_output);
 	crc.calc_crc(initial, msg);
@@ -53,7 +35,7 @@ uint32_t calculate_crc(uint32_t width, const uint8_t* data, size_t length, uint3
 uint32_t calculate_crc(uint32_t crc_width, std::string data, uint32_t polynomial, uint32_t initial, uint32_t final_xor, bool reflected_input, bool reflected_output)
 {
 	crc_t crc(crc_width);
-	boost::dynamic_bitset<> msg = convert_string_to_bitset(data);
+	boost::dynamic_bitset<> msg = bf_crc::convert_string_to_bitset(data);
 
 	crc.set(polynomial, initial, final_xor, reflected_input, reflected_output);
 	crc.calc_crc(initial, msg);
@@ -399,23 +381,6 @@ BOOST_AUTO_TEST_CASE(crcEight) {
     uint8_t data_7_2[] = {0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 	calculated_crc = calculate_crc(crc_width, data_7_2, sizeof(data_7_2), 0x1D, 0xff, 0x00, true, true);
 	BOOST_CHECK(calculated_crc == 0x32);
-
-
-#if 0
-	/*
-	 * CRC-7/ROHC
-	 * width=7 poly=0x4f init=0x7f refin=true refout=true xorout=0x00 check=0x53 name="CRC-7/ROHC"
-	 */
-	calculated_crc = calculate_crc(crc_width, default_data, sizeof(default_data), 0x4F, 0x7F, 0x0, true, true);
-	BOOST_CHECK(calculated_crc == 0x53);
-
-	/*
-	 * CRC-7/UMTS
-	 * width=7 poly=0x45 init=0x00 refin=false refout=false xorout=0x00 check=0x61 name="CRC-7/UMTS"
-	 */
-	calculated_crc = calculate_crc(crc_width, default_data, sizeof(default_data), 0x45, 0x0, 0x0, false, false);
-	BOOST_CHECK(calculated_crc == 0x61);
-#endif
 
 }
 BOOST_AUTO_TEST_CASE(crcFourteen)

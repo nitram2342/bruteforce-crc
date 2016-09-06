@@ -17,6 +17,7 @@
 #include <list>
 #include <sys/time.h>
 #include <boost/thread.hpp>
+#include <boost/dynamic_bitset.hpp>
 #include "crc.hpp"
 
 class bf_crc {
@@ -28,13 +29,13 @@ class bf_crc {
 			uint32_t crc;
 		} test_vector_t;
 
-		typedef struct crc_match_ {
+		typedef struct crc_model_ {
 			uint32_t polynomial;
 			uint32_t initial;
 			uint32_t final_xor;
 			bool reflected_input;
 			bool reflected_output;
-		} crc_match_t;
+		} crc_model_t;
 
 		typedef my_crc_basic crc_t;
 
@@ -73,7 +74,7 @@ class bf_crc {
 		uint64_t test_vector_count_;
 		bool verbose_;
 
-		std::vector<crc_match_t> crc_model_match_;
+		std::vector<crc_model_t> crc_model_match_;
 
 	public: 
 		void set_crc_width(uint16_t var) { crc_width_ = var; update_test_vector_count(); }
@@ -97,7 +98,7 @@ class bf_crc {
 		void set_verbose(bool var) { verbose_ = var; }
 		bool verbose() const { return verbose_; }
 
-		std::vector<crc_match_t> crc_model_match() const { return crc_model_match_; }
+		std::vector<crc_model_t> crc_model_match() const { return crc_model_match_; }
 
 	private:
 
@@ -141,6 +142,9 @@ class bf_crc {
 		static bool int_to_bool(int v);
 		static std::string bool_to_str(bool v);
 		static std::string number_to_str(uint64_t v);
+
+		static boost::dynamic_bitset<> convert_uint8_to_bitset(const uint8_t array[], size_t size);
+		static boost::dynamic_bitset<> convert_string_to_bitset(std::string str);
 
 		static uint32_t max_value(uint8_t width) { return (uint32_t)(((uint64_t)1 << width) - 1); }
 	

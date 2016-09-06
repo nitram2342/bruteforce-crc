@@ -73,6 +73,27 @@ std::string bf_crc::number_to_str(uint64_t v) {
   
 }
 
+boost::dynamic_bitset<> bf_crc::convert_uint8_to_bitset(const uint8_t array[], size_t size) {
+
+	boost::dynamic_bitset<> retVal(size*8);
+
+	for (unsigned int i = 0; i < size; i++)
+		for (int j = 0; j < 8; j++)
+			retVal[i*8+j] = (array[i] >> (7-j)) & 0x1 ? true : false;
+
+	return retVal;
+}
+
+boost::dynamic_bitset<> bf_crc::convert_string_to_bitset(std::string str)
+{
+	boost::dynamic_bitset<> retVal(str.length());
+
+	for (size_t i = 0; i < str.length(); i++)
+		retVal[i] = str[i] == '1' ? true : false;
+
+	return retVal;
+}
+
 uint64_t bf_crc::get_delta_time_in_ms(struct timeval const& start) {
   struct timeval end;
   gettimeofday(&end, NULL);  
@@ -207,7 +228,7 @@ bool bf_crc::brute_force(int thread_number, uint32_t search_poly_start, uint32_t
 							if (verbose_)	
 								show_hit(poly, init, probe_reflected_input ? true : false, probe_reflected_output ? true : false);
 
-							crc_match_t match = { poly, init, final_xor, int_to_bool(probe_reflected_input), int_to_bool(probe_reflected_output) };
+							crc_model_t match = { poly, init, final_xor, int_to_bool(probe_reflected_input), int_to_bool(probe_reflected_output) };
 							crc_model_match_.push_back(match);
 
 							print_stats();

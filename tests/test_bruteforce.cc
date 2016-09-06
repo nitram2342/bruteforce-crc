@@ -26,17 +26,6 @@ char getRandomChar(){
     return c;    
 }
 
-boost::dynamic_bitset<> convert_to_bitset(uint8_t array[], size_t size) {
-
-	boost::dynamic_bitset<> retVal(size*8);
-
-	for (unsigned int i = 0; i < size; i++)
-		for (int j = 0; j < 8; j++)
-			retVal[i*8+j] = (array[i] >> (7-j)) & 0x1 ? true : false;
-
-	return retVal;
-}
-
 BOOST_AUTO_TEST_CASE(crcFourteen)
 {
 	// 14 bit CRC's
@@ -59,7 +48,7 @@ BOOST_AUTO_TEST_CASE(crcFourteen)
 
 	// REVENG Check
 	uint8_t data_0[] = {0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39}; 
-	msg = convert_to_bitset(data_0, 9);
+	msg = bf_crc::convert_uint8_to_bitset(data_0, 9);
 	crc.set(0x0805, // Poly
 			0x0000, // Initial (Overwritten)
 			0x0000, // Final XOR
@@ -82,7 +71,7 @@ BOOST_AUTO_TEST_CASE(crcFourteen)
 			data[b] = getRandomChar();
 		}
 
-		msg = convert_to_bitset(data, 9);
+		msg = bf_crc::convert_uint8_to_bitset(data, 9);
 		crc.set(0x805, // Poly
 				0x0000, // Initial (Overwritten)
 				0x0000, // Final XOR
@@ -139,7 +128,7 @@ BOOST_AUTO_TEST_CASE(crcSixteen)
 
 	// REVENG Check
 	uint8_t data_0[] = {0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39}; 
-	msg = convert_to_bitset(data_0, 9);
+	msg = bf_crc::convert_uint8_to_bitset(data_0, 9);
 	crc.set(0x8005, // Poly
 			0x0000, // Initial (Overwritten)
 			0x0000, // Final XOR
@@ -162,7 +151,7 @@ BOOST_AUTO_TEST_CASE(crcSixteen)
 			data[b] = getRandomChar();
 		}
 
-		msg = convert_to_bitset(data, 9);
+		msg = bf_crc::convert_uint8_to_bitset(data, 9);
 		crc.set(0x8005, // Poly
 				0x0000, // Initial (Overwritten)
 				0x0000, // Final XOR
@@ -217,7 +206,7 @@ BOOST_AUTO_TEST_CASE(crcThirtyTwo)
 
 	// REVENG Check
 	uint8_t data_0[] = {0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39}; 
-	msg = convert_to_bitset(data_0, 9);
+	msg = bf_crc::convert_uint8_to_bitset(data_0, 9);
 	crc.set(0x04C11db7, // Poly
 			0xFFFFFFFF, // Initial (Overwritten)
 			0xFFFFFFFF, // Final XOR
@@ -240,7 +229,7 @@ BOOST_AUTO_TEST_CASE(crcThirtyTwo)
 			data[b] = getRandomChar();
 		}
 
-		msg = convert_to_bitset(data, 9);
+		msg = bf_crc::convert_uint8_to_bitset(data, 9);
 		crc.set(0x04C11DB7, // Poly
 				0xFFFFFFFF, // Initial (Overwritten)
 				0xFFFFFFFF, // Final XOR
