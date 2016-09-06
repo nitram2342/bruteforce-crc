@@ -19,8 +19,6 @@
 #include <boost/thread.hpp>
 #include "crc.hpp"
 
-#define MAX_VALUE(width) (uint32_t)((1 << width) - 1)
-
 class bf_crc {
 
 	public:
@@ -118,20 +116,21 @@ class bf_crc {
 
 			if (polynomial_ > 0)
 				test_vector_count_ = 1;
-			else
-				test_vector_count_ = 1+MAX_VALUE(crc_width_);
+			else 
+				test_vector_count_ = (uint64_t)1+max_value(crc_width_);
 
 			if (probe_final_xor_)
-				test_vector_count_ *= 1+MAX_VALUE(crc_width_);
+				test_vector_count_ *= (uint64_t)1+max_value(crc_width_);
 
 			if (probe_initial_)
-				test_vector_count_ *= 1+MAX_VALUE(crc_width_);
+				test_vector_count_ *= (uint64_t)1+max_value(crc_width_);
 
 			if (probe_reflected_input_)
 				test_vector_count_ *= 2;
 
 			if (probe_reflected_output_)
 				test_vector_count_ *= 2;
+
 		}
 
 	public: 
@@ -142,6 +141,8 @@ class bf_crc {
 		static bool int_to_bool(int v);
 		static std::string bool_to_str(bool v);
 		static std::string number_to_str(uint64_t v);
+
+		static uint32_t max_value(uint8_t width) { return (uint32_t)(((uint64_t)1 << width) - 1); }
 	
 		void set_parameters(	uint16_t crc_width, 
 								uint32_t polynomial, 

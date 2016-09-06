@@ -504,4 +504,29 @@ BOOST_AUTO_TEST_CASE(crcSixteen)
 
 }
 
+BOOST_AUTO_TEST_CASE(crcThirtyTwo) {
 
+	// 32 bit CRC's
+	uint8_t crc_width = 32;
+	crc_t crc(crc_width);
+	uint32_t calculated_crc;
+
+	/*
+ 	 * CRC-32/AUTOSAR
+ 	 * width=32 poly=0xf4acfb13 init=0xffffffff refin=true refout=true xorout=0xffffffff check=0x1697d06a name="CRC-32/AUTOSAR"
+ 	 */
+	
+	// REVENG Test Check
+	calculated_crc = calculate_crc(crc_width, default_data, sizeof(default_data), 0xF4ACFB13, 0xFFFFFFFF, 0xFFFFFFFF, true, true);
+	BOOST_CHECK(calculated_crc == 0x1697d06a);
+
+	/*
+	 * CRC-32/BZIP2
+	 * width=32 poly=0x04c11db7 init=0xffffffff refin=false refout=false xorout=0xffffffff check=0xfc891918 name="CRC-32/BZIP2"
+	 */
+	calculated_crc = calculate_crc(crc_width, default_data, sizeof(default_data), 0x04C11DB7, 0xFFFFFFFF, 0xFFFFFFFF, false, false);
+	BOOST_CHECK(calculated_crc == 0xFC891918);
+
+
+
+}
