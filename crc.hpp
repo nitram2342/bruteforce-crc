@@ -58,6 +58,10 @@ public:
 void calc_crc(value_type const use_initia,
 		boost::dynamic_bitset<> const& msg);
 
+  bool calc_crc(value_type const use_initial,
+		uint8_t msg[], size_t msg_length,
+		value_type const expected_crc);
+
   value_type reflect(value_type  x ) const;
 
 private:

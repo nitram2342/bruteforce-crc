@@ -100,17 +100,16 @@ uint64_t bf_crc::get_delta_time_in_ms(struct timeval const& start) {
   return (end.tv_sec*1000 + end.tv_usec/1000.0) - (start.tv_sec*1000 + start.tv_usec/1000.0); 
 }
 
-void bf_crc::show_hit(uint32_t poly, uint32_t init, bool ref_in, bool ref_out) {
+void bf_crc::show_hit(crc_model_t model) {
 
   std::cout 
     << "----------------------------[ MATCH ]--------------------------------\n"
     << "Found a model for the CRC calculation:\n"
-    << "Truncated polynom : 0x" << std::hex << poly << " (" << std::dec << poly << ")\n"
-    << "Initial value     : 0x" << std::hex << init << " (" << std::dec << init << ")\n"
-    << "Final XOR         : 0x" << std::hex << final_xor_ << " (" << std::dec << final_xor_ << ")\n"
-    << "Reflected input   : " << bool_to_str(ref_in) << "\n"
-    << "Reflected output  : " << bool_to_str(ref_out) << "\n"
-    //<< "Message offset    : from bit " << start_ << " .. " << end_ << " (end not included)\n"
+    << "Truncated polynom : 0x" << std::hex << model.polynomial << " (" << std::dec << model.polynomial << ")\n"
+    << "Initial value     : 0x" << std::hex << model.initial << " (" << std::dec << model.initial << ")\n"
+    << "Final XOR         : 0x" << std::hex << model.final_xor << " (" << std::dec << model.final_xor << ")\n"
+    << "Reflected input   : " << bool_to_str(model.reflected_input) << "\n"
+    << "Reflected output  : " << bool_to_str(model.reflected_output) << "\n"
     << std::endl << std::flush;
 
 }
@@ -225,11 +224,11 @@ bool bf_crc::brute_force(int thread_number, uint32_t search_poly_start, uint32_t
 
 							mymutex.lock();
 
-							if (verbose_)	
-								show_hit(poly, init, probe_reflected_input ? true : false, probe_reflected_output ? true : false);
-
 							crc_model_t match = { poly, init, final_xor, int_to_bool(probe_reflected_input), int_to_bool(probe_reflected_output) };
 							crc_model_match_.push_back(match);
+
+							if (verbose_)	
+								show_hit(match);
 
 							print_stats();
 
@@ -246,9 +245,10 @@ bool bf_crc::brute_force(int thread_number, uint32_t search_poly_start, uint32_t
 					crc_counter += probe_initial_ ? max_value(crc_width_) : 1;
 
 					// TODO: is this a good way to do this?
-					if(probe_final_xor_ || (crc_counter % 0x800 == 0))
+					if(probe_final_xor_ || (crc_counter % 0x80000 == 0))
 					{
 						print_stats();
+						//std::cout << std::endl << std::hex << poly << std::dec << "\r";
 					}
 
 					mymutex.unlock();
@@ -257,6 +257,8 @@ bool bf_crc::brute_force(int thread_number, uint32_t search_poly_start, uint32_t
 					if (final_xor == max_value(sizeof(final_xor) * 8)) break;
 
 				} // end for loop, final_xor
+
+				if (poly == max_value(sizeof(poly) * 8)) break;
 
 			} // end for loop, polynomial
 

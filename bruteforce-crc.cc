@@ -178,8 +178,8 @@ int main(int argc, char *argv[]) {
 	if(vm.count("final-xor")) 					final_xor			= vm["final-xor"].as<uint32_t>();
 	if(vm.count("probe-final-xor")) 			probe_final_xor		= vm["probe-final-xor"].as<bool>();
 	if(vm.count("poly")) 						polynomial			= vm["poly"].as<uint32_t>();
-	if(vm.count("probe-reflected-input")) 		reflected_input		= vm["reflect-in"].as<bool>();
-	if(vm.count("probe-reflected-output"))	 	reflected_output	= vm["reflect-out"].as<bool>();
+	if(vm.count("probe-reflected-input")) 		reflected_input		= vm["probe-reflected-input"].as<bool>();
+	if(vm.count("probe-reflected-output"))	 	reflected_output	= vm["probe-reflected-output"].as<bool>();
 
 	// Check parameters TODO: A lot more checking
 	if(crc_width > 16) { std::cout << "maximum value for width is: 16\n"; exit(1); } // Why 16?

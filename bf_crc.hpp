@@ -108,7 +108,7 @@ class bf_crc {
 		boost::mutex mymutex;
 
 		uint64_t get_delta_time_in_ms(struct timeval const& start);
-		void show_hit(uint32_t poly, uint32_t init, bool ref_in, bool ref_out);
+		void show_hit(crc_model_t model);
 		void print_stats(void);
 
 		void update_test_vector_count()
