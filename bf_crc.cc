@@ -335,19 +335,6 @@ int bf_crc::do_brute_force(int num_threads, std::vector<test_vector_t> test_vect
 	if (verbose_)
 		std::cout << std::endl << std::flush; 
 
-/*
-	for(uint32_t _poly = 0; _poly <= max_value(crc_width_); _poly += poly_step + 1) {
-
-std::cout << std::hex << "P: " << _poly << std::endl << std::flush; 
-
-		// Limit end poly size, rounding could cause problems with odd number of processors
-		uint32_t end_poly = _poly + poly_step - 1;
-		if (end_poly > max_value(crc_width_)) end_poly = max_value(crc_width_);
-
-		// Start the thread
-
-	}
-*/
 	// Wait for all threads to complete
 	pool.wait();
 

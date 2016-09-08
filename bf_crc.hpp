@@ -174,8 +174,6 @@ class bf_crc {
 							std::vector<test_vector_t> test_vectors);
 		int do_brute_force(int num_threads, std::vector<test_vector_t> test_vectors);
 
-		bool save_models_to_file(std::string filename);
-
 };
 
 #endif

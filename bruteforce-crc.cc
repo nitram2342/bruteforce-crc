@@ -190,11 +190,6 @@ int main(int argc, char *argv[]) {
 		test_vectors = read_file(vm["file"].as<std::string>(), start, end-start, offs_crc, crc_width, verbose);
 	}
 
-	// Set output file
-	if(vm.count("output")) {
-		
-	}
-
 	// Override non-conformal input
 	if (probe_initial) initial = 0;
 
@@ -221,6 +216,26 @@ int main(int argc, char *argv[]) {
 		std::cout << "Found " << found << " matches." << std::endl << std::endl;
 	else
 		std::cout << "No model found." << std::endl << std::endl;
+
+	// Set output file
+	if(vm.count("output")) {
+		std::vector<bf_crc::crc_model_t> models = crc_bruteforce->crc_model_match();
+		try {
+			std::ofstream ofile;
+			std::string file = vm["output"].as<std::string>();
+			ofile.open(file.c_str());
+			ofile << "Polynomial, Initial, Final XOR, Reflected Input, Reflected Output" << std::endl;
+			for (size_t i = 0; i < models.size(); i++) {
+				ofile << std::hex << "0x" << models[i].polynomial << "," << std::dec;
+				ofile << std::hex << "0x" << models[i].initial << "," << std::dec;
+				ofile << std::hex << "0x" << models[i].final_xor << "," << std::dec;
+				ofile << (models[i].reflected_input ? "true" : "false") << ",";
+				ofile << (models[i].reflected_output ? "true" : "false") << std::endl;
+			}
+			ofile.close();
+		} catch (...) { }
+			
+	}
 
 	return 0;
 }
