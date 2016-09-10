@@ -19,8 +19,9 @@
 //#define BOOST_CRC
 //#define TIMER
 
+#ifdef TIMER
 boost::timer::auto_cpu_timer t;
-
+#endif
 
 #include "../crc.hpp"
 
