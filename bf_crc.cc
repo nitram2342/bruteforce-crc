@@ -219,7 +219,7 @@ bool bf_crc::brute_force(int thread_number, uint32_t search_poly_start, uint32_t
 						for(m_i = 0; match && (m_i < test_vectors.size()); m_i++)
 							match = crc.calc_crc(init, test_vectors[m_i].message, test_vectors[m_i].crc);
 
-						// If match is true there were no errors, TODO: why checl m_i against test_vectors_size?
+						// If match is true there were no errors
 						if(match == true && m_i == test_vectors.size()) {
 
 							mymutex.lock();
@@ -241,7 +241,6 @@ bool bf_crc::brute_force(int thread_number, uint32_t search_poly_start, uint32_t
 
 					mymutex.lock();
 
-					// TODO: Account for final xor
 					crc_counter += probe_initial_ ? max_value(crc_width_) : 1;
 
 					// TODO: is this a good way to do this?

@@ -182,7 +182,7 @@ int main(int argc, char *argv[]) {
 	if(vm.count("probe-reflected-output"))	 	reflected_output	= vm["probe-reflected-output"].as<bool>();
 
 	// Check parameters TODO: A lot more checking
-	if(crc_width > 16) { std::cout << "maximum value for width is: 16\n"; exit(1); } // Why 16?
+	if(crc_width > 32) { std::cout << "Error: maximum value for width is 32" << std::endl; exit(1); }
 
 	// Read messages from intput file
 	std::vector<bf_crc::test_vector_t> test_vectors;
