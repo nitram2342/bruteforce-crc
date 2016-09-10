@@ -10,7 +10,7 @@
 
 #include <boost/dynamic_bitset.hpp>
 #include <boost/crc.hpp>
-#include <boost/timer/timer.hpp>
+//#include <boost/timer/timer.hpp>
 
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE "Test the CRC engine"
