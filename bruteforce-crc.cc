@@ -150,6 +150,8 @@ int main(int argc, char *argv[]) {
     ("final-xor", 				po::value<uint32_t>(), 			"Final xor (default: 0)")
     ("probe-final-xor",			po::value<bool>(), 				"Bruteforce the final-xor, overrides final-xor (default: false)")
     ("poly", 					po::value<uint32_t>(), 			"Truncated polynomial (default: bruteforced)")
+	("poly-start",				po::value<uint32_t>(),			"Start of polynomial search space (default: 0)")
+	("poly-end",				po::value<uint32_t>(),			"End of polynomial search space (default (2^width - 1))")
     ("probe-reflected-input", 	po::value<bool>(), 				"Probe for reflect input (default: false)")
     ("probe-reflected-output", 	po::value<bool>(), 				"Probe for reflect remainder output (default: false)")
     ;
@@ -207,6 +209,17 @@ int main(int argc, char *argv[]) {
 								initial, 			// Initial
 								reflected_input, 	// Probe Reflected Input?
 								reflected_output);	// Probe Reflected Output?
+
+	// The command line input can limit the search range
+	if (vm.count("poly-start")) {
+		uint32_t poly_start = vm["poly-start"].as<uint32_t>();
+		crc_bruteforce->set_polynomial_start(poly_start);
+	}
+
+	if (vm.count("poly-end")) {
+		uint32_t poly_end = vm["poly-end"].as<uint32_t>();
+		crc_bruteforce->set_polynomial_end(poly_end);
+	}
 
 	crc_bruteforce->set_verbose(verbose);
 		

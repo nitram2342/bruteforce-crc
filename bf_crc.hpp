@@ -46,8 +46,7 @@ class bf_crc {
 				bool probe_initial, 
 				uint32_t initial, 
 				bool probe_reflected_input, 
-				bool probe_reflected_output)
-		{
+				bool probe_reflected_output) {
 			set_parameters(	crc_width, 
 							polynomial, 
 							probe_final_xor, 
@@ -59,11 +58,14 @@ class bf_crc {
 			crc_model_match_.clear();
 		}
 
-	void print_settings(void);
+		void print_settings(void);
 
 	private: 
 		uint16_t crc_width_; 
-		uint32_t polynomial_; 
+		uint32_t polynomial_;
+		bool polynomial_range_;
+		uint32_t polynomial_start_;
+		uint32_t polynomial_end_;
 		bool probe_final_xor_;
 		uint32_t final_xor_;
 		bool probe_initial_;
@@ -77,10 +79,31 @@ class bf_crc {
 		std::vector<crc_model_t> crc_model_match_;
 
 	public: 
-		void set_crc_width(uint16_t var) { crc_width_ = var; update_test_vector_count(); }
+		void set_crc_width(uint16_t var) { 
+			crc_width_ = var; 
+			update_test_vector_count(); 
+			polynomial_range_ = false;
+			polynomial_start_ = 0;
+			polynomial_end_ = max_value(crc_width_);
+			update_test_vector_count();
+		}
 		uint16_t crc_width() const { return crc_width_; }
 		void set_polynomial(uint32_t var) { polynomial_ = var; update_test_vector_count(); }
 		uint32_t polynomial() const { return polynomial_; }
+		void set_polynomial_range(bool var) { polynomial_range_ = var; set_crc_width(crc_width_); }
+		bool polynomial_range() const { return polynomial_range_; }
+		void set_polynomial_start(uint32_t var) { 
+			polynomial_start_ = var; 
+			polynomial_range_ = true; 
+			update_test_vector_count(); 
+		}
+		uint32_t polynomial_start() const { return polynomial_start_; }
+		void set_polynomial_end(uint32_t var) { 
+			polynomial_end_ = var; 
+			polynomial_range_ = true;
+			update_test_vector_count(); 
+		}
+		uint32_t polynomial_end() const { return polynomial_end_; }
 		void set_probe_final_xor(bool var) { probe_final_xor_ = var; update_test_vector_count(); }
 		bool probe_final_xor() const { return probe_final_xor_; }
 		void set_final_xor(uint32_t var) { final_xor_ = var; }
@@ -115,16 +138,20 @@ class bf_crc {
 		{
 			test_vector_count_ = 0;
 
-			if (polynomial_ > 0)
+			// TODO: Check polynomial range and throw exception if too large
+			if (polynomial_ > 0) {
 				test_vector_count_ = 1;
-			else 
-				test_vector_count_ = (uint64_t)1+max_value(crc_width_);
+			} else if (polynomial_range_) {
+				test_vector_count_ = polynomial_end_ - polynomial_start_;
+			} else {
+				test_vector_count_ = (uint64_t)max_value(crc_width_);
+			}
 
 			if (probe_final_xor_)
-				test_vector_count_ *= (uint64_t)1+max_value(crc_width_);
+				test_vector_count_ *= (uint64_t)max_value(crc_width_);
 
 			if (probe_initial_)
-				test_vector_count_ *= (uint64_t)1+max_value(crc_width_);
+				test_vector_count_ *= (uint64_t)max_value(crc_width_);
 
 			if (probe_reflected_input_)
 				test_vector_count_ *= 2;

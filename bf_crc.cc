@@ -155,7 +155,7 @@ void bf_crc::print_settings(void)
 	if (polynomial_ > 0)
 		std::cout << ": 0x" << std::hex << polynomial_ << std::dec << std::endl;
 	else
-		std::cout << ": 0x0 to 0x" << std::hex << max_value(crc_width_) << std::dec << std::endl;
+		std::cout << ": 0x" << std::hex << polynomial_start_ << " to 0x" << std::hex << polynomial_end_ << std::dec << std::endl;
 
 	if (probe_initial_)
 		std::cout << "Initial value		: 0x0 to 0x" << std::hex << max_value(crc_width_) << std::dec << std::endl;
@@ -307,20 +307,29 @@ int bf_crc::do_brute_force(int num_threads, std::vector<test_vector_t> test_vect
 	int thread_number = 0;
 	
 	// Polystep is how the search polynomials are spread betweeen threads
-	int poly_step = polynomial_ > 0 ? 1 : max_value(crc_width_)/num_threads;
+	int poly_count = polynomial_end_ - polynomial_start_;
+	int poly_step = polynomial_ > 0 ? 1 : poly_count/num_threads;
 
 	// Handle low polynomial count
 	if (poly_step == 0) poly_step = 1;
 
 	for(int thread_number = 0; thread_number < num_threads; thread_number++) {
 
-		uint32_t search_end = polynomial_ > 0 ? polynomial_ : (thread_number + 1) * poly_step - 1;
+		uint32_t search_end = 0;
+		if (polynomial_ > 0)
+			search_end = polynomial_;
+		else
+			search_end = polynomial_start_ + (thread_number + 1) * poly_step - 1;
 
 		// Due to math the last caluclate will wrap to zero?
 		if (thread_number == num_threads-1 && polynomial_ == 0)
-			search_end = max_value(crc_width_);
+			search_end = polynomial_end_;
 
-		uint32_t search_start = polynomial_ > 0 ? polynomial_ : thread_number * poly_step;
+		uint32_t search_start = 0;
+		if (polynomial_ > 0) 
+			search_start = polynomial_;
+		else
+			search_start = polynomial_start_ + thread_number * poly_step;
 
 		if (verbose_) {
 			std::cout << "Starting Thread " << thread_number << ", searching from ";
