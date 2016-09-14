@@ -31,8 +31,6 @@
 
 #include "bf_crc.hpp"
 
-#define MAX_VALUE(width) (uint32_t)((1 << width) - 1)
-
 namespace po = boost::program_options;
 
 /*
@@ -97,15 +95,6 @@ std::vector<bf_crc::test_vector_t> read_file(std::string const& file, int32_t of
 
 	return test_vectors;
 }
-
-/* --------------------------------------------------------------------------
-
-     Main
-
-   --------------------------------------------------------------------------
-*/
-
-
 
 int main(int argc, char *argv[]) {
 
@@ -183,7 +172,7 @@ int main(int argc, char *argv[]) {
 	if(vm.count("probe-reflected-input")) 		reflected_input		= vm["probe-reflected-input"].as<bool>();
 	if(vm.count("probe-reflected-output"))	 	reflected_output	= vm["probe-reflected-output"].as<bool>();
 
-	// Check parameters TODO: A lot more checking
+	// Check parameters: A lot more checking
 	if(crc_width > 32) { std::cout << "Error: maximum value for width is 32" << std::endl; exit(1); }
 
 	// Read messages from intput file
