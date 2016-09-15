@@ -123,24 +123,28 @@ int main(int argc, char *argv[]) {
 
 	// Definition of program options
 	// Boost program options to allow settings with call
-	po::options_description desc("Allowed options");
+	po::options_description desc("Allowed options [required *]");
 	desc.add_options()
-    ("help", "Produce help message")
-    ("file", 					po::value<std::string>(), 		"File containing messages")
+    ("help", 													"Produce help message")
+    ("file", 					po::value<std::string>(), 		"* File containing messages")
+    ("width",					po::value<size_t>(), 			"* CRC width")
+    ("offs-crc", 				po::value<size_t>(), 			"* CRC's offset")
+    ("start", 					po::value<size_t>(), 			"* Calculate CRC from this offset")
+    ("end", 					po::value<size_t>(), 			"* Calculate CRC up to this offset (not included)")
+
 	("output", 					po::value<std::string>(), 		"Output file for matched crc settings")
 	("verbose", 				po::value<bool>(), 				"Enable verbose output")
-    ("threads", 				po::value<unsigned int >(), 	"Number of threads (default: 4)")
-    ("width",					po::value<size_t>(), 			"CRC width")
-    ("offs-crc", 				po::value<size_t>(), 			"CRC's offset")
-    ("start", 					po::value<size_t>(), 			"Calculate CRC from this offset")
-    ("end", 					po::value<size_t>(), 			"Calculate CRC up to this offset (not included)")
-	("initial", 				po::value<size_t>(), 			"Set intial value (default: 0)")
-    ("probe-initial", 			po::value<bool>(), 				"Bruteforce the intial, overrides initial (default: true)")
-    ("final-xor", 				po::value<uint32_t>(), 			"Final xor (default: 0)")
-    ("probe-final-xor",			po::value<bool>(), 				"Bruteforce the final-xor, overrides final-xor (default: false)")
+
     ("poly", 					po::value<uint32_t>(), 			"Truncated polynomial (default: bruteforced)")
 	("poly-start",				po::value<uint32_t>(),			"Start of polynomial search space (default: 0)")
 	("poly-end",				po::value<uint32_t>(),			"End of polynomial search space (default (2^width - 1))")
+    
+	("threads", 				po::value<unsigned int >(), 	"Number of threads (default: 4)")
+	("initial", 				po::value<size_t>(), 			"Set intial value (default: 0)")
+
+    ("probe-initial", 			po::value<bool>(), 				"Bruteforce the intial, overrides initial (default: true)")
+    ("final-xor", 				po::value<uint32_t>(), 			"Final xor (default: 0)")
+    ("probe-final-xor",			po::value<bool>(), 				"Bruteforce the final-xor, overrides final-xor (default: false)")
     ("probe-reflected-input", 	po::value<bool>(), 				"Probe for reflect input (default: false)")
     ("probe-reflected-output", 	po::value<bool>(), 				"Probe for reflect remainder output (default: false)")
     ;
