@@ -123,7 +123,12 @@ uint32_t calculate_crc(uint32_t crc_width, std::string data, uint32_t polynomial
 	crc.calc_crc(initial, msg);
 	return crc.checksum();
 }
-	
+
+/* 
+ * Test 3-bit CRC's from reveng.sourceforge.net
+ * 1 Example
+ * 14/09/2016
+ */	
 BOOST_AUTO_TEST_CASE(crcThree) {
 
 #ifdef TIMER
@@ -143,6 +148,11 @@ BOOST_AUTO_TEST_CASE(crcThree) {
 	BOOST_CHECK(calculated_crc == 0x6);
 }
 
+/*
+ * Test 4-bit CRC's from reveng.sourceforge.net
+ * 2 Examples
+ * 14/09/2016
+ */
 BOOST_AUTO_TEST_CASE(crcFour) {
 
 #ifdef TIMER
@@ -170,6 +180,11 @@ BOOST_AUTO_TEST_CASE(crcFour) {
 
 }
 
+/* 
+ * Test 5-bit CRC's from reveng.sourceforge.net
+ * 3 Examples
+ * 14/09/2016
+ */
 BOOST_AUTO_TEST_CASE(crcFive) {
 
 #ifdef TIMER	
@@ -236,6 +251,11 @@ BOOST_AUTO_TEST_CASE(crcFive) {
 
 }
 
+/*
+ * Test 6-bit CRC's from reveng.sourceforge.net
+ * 4 Examples
+ * 14/06/2016
+ */
 BOOST_AUTO_TEST_CASE(crcSix) {
 
 #ifdef TIMER
@@ -329,6 +349,11 @@ std::cout << std::hex << calculated_crc <<std::endl;
 
 }
 
+/*
+ * Test 7-bit CRC's from reveng.sourceforge.net
+ * 3 Examples
+ * 14/09/2016
+ */
 BOOST_AUTO_TEST_CASE(crcSeven) {
 
 #ifdef TIMER
@@ -361,9 +386,13 @@ BOOST_AUTO_TEST_CASE(crcSeven) {
 	calculated_crc = calculate_crc(crc_width, default_data, sizeof(default_data), 0x45, 0x0, 0x0, false, false);
 	BOOST_CHECK(calculated_crc == 0x61);
 
-
 }
 
+/*
+ * Test 8-bit CRC's from reveng.sourceforge.net
+ * 14 Examples
+ * 15/09/2016
+ */
 BOOST_AUTO_TEST_CASE(crcEight) {
 
 #ifdef TIMER
@@ -395,47 +424,47 @@ BOOST_AUTO_TEST_CASE(crcEight) {
 
 	// AUTOSAR Release 4.2.2
 	// Test Vector 1
-	uint8_t data_3_1[] = {0x00, 0x00, 0x00, 0x00};
-	calculated_crc = calculate_crc(crc_width, data_3_1, sizeof(data_3_1), 0x2F, 0xFF, 0xFF, false, false);
+	uint8_t data_2_1[] = {0x00, 0x00, 0x00, 0x00};
+	calculated_crc = calculate_crc(crc_width, data_2_1, sizeof(data_2_1), 0x2F, 0xFF, 0xFF, false, false);
 	BOOST_CHECK(calculated_crc == 0x12);
 
 	// AUTOSAR Release 4.2.2
 	// Test Vector 2
-	uint8_t data_3_2[] = {0xF2, 0x01, 0x83};
-	calculated_crc = calculate_crc(crc_width, data_3_2, sizeof(data_3_2), 0x2F, 0xFF, 0xFF, false, false);
+	uint8_t data_2_2[] = {0xF2, 0x01, 0x83};
+	calculated_crc = calculate_crc(crc_width, data_2_2, sizeof(data_2_2), 0x2F, 0xFF, 0xFF, false, false);
 	BOOST_CHECK(calculated_crc == 0xC2);
 
  	// AUTOSAR Release 4.2.2
 	// Test Vector 3
-	uint8_t data_3_3[] = {0x0F, 0xAA, 0x00, 0x55};
- 	calculated_crc = calculate_crc(crc_width, data_3_3, sizeof(data_3_3), 0x2F, 0xFF, 0xFF, false, false);
+	uint8_t data_2_3[] = {0x0F, 0xAA, 0x00, 0x55};
+ 	calculated_crc = calculate_crc(crc_width, data_2_3, sizeof(data_2_3), 0x2F, 0xFF, 0xFF, false, false);
 	BOOST_CHECK(calculated_crc == 0xC6);
 
  	// AUTOSAR Release 4.2.2
 	// Test Vector 4
-	uint8_t data_3_4[] = {0x00, 0xFF, 0x55, 0x11};
-	calculated_crc = calculate_crc(crc_width, data_3_4, sizeof(data_3_4), 0x2F, 0xFF, 0xFF, false, false);
+	uint8_t data_2_4[] = {0x00, 0xFF, 0x55, 0x11};
+	calculated_crc = calculate_crc(crc_width, data_2_4, sizeof(data_2_4), 0x2F, 0xFF, 0xFF, false, false);
 	BOOST_CHECK(calculated_crc == 0x77);
 
 
  	// AUTOSAR Release 4.2.2
 	// Test Vector 5
-	uint8_t data_3_5[] = {0x33, 0x22, 0x55, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF};
-	calculated_crc = calculate_crc(crc_width, data_3_5, sizeof(data_3_5), 0x2F, 0xFF, 0xFF, false, false);
+	uint8_t data_2_5[] = {0x33, 0x22, 0x55, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF};
+	calculated_crc = calculate_crc(crc_width, data_2_5, sizeof(data_2_5), 0x2F, 0xFF, 0xFF, false, false);
 	BOOST_CHECK(calculated_crc == 0x11);
 
 
  	// AUTOSAR Release 4.2.2
 	// Test Vector 6
-	uint8_t data_3_6[] = {0x92, 0x6B, 0x55};
-	calculated_crc = calculate_crc(crc_width, data_3_6, sizeof(data_3_6), 0x2F, 0xFF, 0xFF, false, false);
+	uint8_t data_2_6[] = {0x92, 0x6B, 0x55};
+	calculated_crc = calculate_crc(crc_width, data_2_6, sizeof(data_2_6), 0x2F, 0xFF, 0xFF, false, false);
 	BOOST_CHECK(calculated_crc == 0x33);
 
 
  	// AUTOSAR Release 4.2.2
 	// Test Vector 7
-	uint8_t data_3_7[] = {0xFF, 0xFF, 0xFF, 0xFF};
-	calculated_crc = calculate_crc(crc_width, data_3_7, sizeof(data_3_7), 0x2F, 0xFF, 0xFF, false, false);
+	uint8_t data_2_7[] = {0xFF, 0xFF, 0xFF, 0xFF};
+	calculated_crc = calculate_crc(crc_width, data_2_7, sizeof(data_2_7), 0x2F, 0xFF, 0xFF, false, false);
 	BOOST_CHECK(calculated_crc == 0x6C);
 
 	/*
@@ -454,8 +483,8 @@ BOOST_AUTO_TEST_CASE(crcEight) {
 
 	// ETSI EN 300 751
 	// 0000000100000011 11010111 = 80C0EB
-	uint8_t data_5_1[] = {0x80, 0xC0};
-	calculated_crc = calculate_crc(crc_width, data_5_1, sizeof(data_5_1), 0x39, 0x00, 0x00, true, true);
+	uint8_t data_4_1[] = {0x80, 0xC0};
+	calculated_crc = calculate_crc(crc_width, data_4_1, sizeof(data_4_1), 0x39, 0x00, 0x00, true, true);
 	BOOST_CHECK(calculated_crc == 0xEB);
 
 	/*
@@ -466,8 +495,8 @@ BOOST_AUTO_TEST_CASE(crcEight) {
 	BOOST_CHECK(calculated_crc == 0xBC);
 
 	// OpenSAFETY Safety Profie Specification Working Draft Propsal Version 1.4.0
-	uint8_t data_6_1[] = {0x22, 0xC8, 0x12, 0x56, 0x30, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88};
-	calculated_crc = calculate_crc(crc_width, data_6_1, sizeof(data_6_1), 0xD5, 0x00, 0x00, false, false);
+	uint8_t data_5_1[] = {0x22, 0xC8, 0x12, 0x56, 0x30, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88};
+	calculated_crc = calculate_crc(crc_width, data_5_1, sizeof(data_5_1), 0xD5, 0x00, 0x00, false, false);
 	BOOST_CHECK(calculated_crc == 0x4F);
 
 	/*
@@ -479,15 +508,160 @@ BOOST_AUTO_TEST_CASE(crcEight) {
 
  	// Tech 3250: Specification of the audio interface, 3rd edition
  	// Test Vector 1
-	uint8_t data_7_1[] = {0x3D, 0x02, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}; 
-	calculated_crc = calculate_crc(crc_width, data_7_1, sizeof(data_7_1), 0x1D, 0xff, 0x00, true, true);
+	uint8_t data_6_1[] = {0x3D, 0x02, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}; 
+	calculated_crc = calculate_crc(crc_width, data_6_1, sizeof(data_6_1), 0x1D, 0xff, 0x00, true, true);
 	BOOST_CHECK(calculated_crc == 0x9B);
 
  	// Tech 3250: Specification of the audio interface, 3rd edition
  	// Test Vector 2
-    uint8_t data_7_2[] = {0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-	calculated_crc = calculate_crc(crc_width, data_7_2, sizeof(data_7_2), 0x1D, 0xff, 0x00, true, true);
+    uint8_t data_6_2[] = {0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+	calculated_crc = calculate_crc(crc_width, data_6_2, sizeof(data_6_2), 0x1D, 0xff, 0x00, true, true);
 	BOOST_CHECK(calculated_crc == 0x32);
+
+	/*
+	 * CRC-8/I-CODE
+	 * width=8 poly=0x1d init=0xfd refin=false refout=false xorout=0x00 check=0x7e name="CRC-8/I-CODE"
+	 */
+	calculated_crc = calculate_crc(crc_width, default_data, sizeof(default_data), 0x1D, 0xFD, 0x00, false, false);
+	BOOST_CHECK(calculated_crc == 0x7E);
+
+	/*
+	 * CRC-8/ITU
+	 * width=8 poly=0x07 init=0x00 refin=false refout=false xorout=0x55 check=0xa1 name="CRC-8/ITU"
+	 */
+	calculated_crc = calculate_crc(crc_width, default_data, sizeof(default_data), 0x07, 0x00, 0x55, false, false);
+	BOOST_CHECK(calculated_crc == 0xA1);
+
+ 	// ITU-T Recommendation I.432.1
+ 	// Test Vector 1
+	uint8_t data_9_1[] = {0x00, 0x00, 0x00, 0x00};
+	calculated_crc = calculate_crc(crc_width, data_9_1, sizeof(data_9_1), 0x07, 0x00, 0x55, false, false);
+	BOOST_CHECK(calculated_crc == 0x55);
+
+ 	// ITU-T Recommendation I.432.1
+ 	// Test Vector 2
+    uint8_t data_9_2[] = {0x00, 0x00, 0x00, 0x01};
+	calculated_crc = calculate_crc(crc_width, data_9_2, sizeof(data_9_2), 0x07, 0x00, 0x55, false, false);
+	BOOST_CHECK(calculated_crc == 0x52);
+
+	/*
+	 * CRC-8/LTE
+	 * width=8 poly=0x9b init=0x00 refin=false refout=false xorout=0x00 check=0xea name="CRC-8/LTE"
+	 */
+	calculated_crc = calculate_crc(crc_width, default_data, sizeof(default_data), 0x9B, 0x00, 0x00, false, false);
+	BOOST_CHECK(calculated_crc == 0xEA);
+
+	/*
+	 * CRC-8/MAXIM
+	 * width=8 poly=0x31 init=0x00 refin=true refout=true xorout=0x00 check=0xa1 name="CRC-8/MAXIM"
+	 */
+	calculated_crc = calculate_crc(crc_width, default_data, sizeof(default_data), 0x31, 0x00, 0x00, true, true);
+	BOOST_CHECK(calculated_crc == 0xA1);
+
+	// Maxim iButton datasheet (DS1904)
+	uint8_t data_11_1[] = {0x24, 0x2B, 0xC5, 0xFB, 0x00, 0x00, 0x00};
+	calculated_crc = calculate_crc(crc_width, data_11_1, sizeof(data_11_1), 0x31, 0x00, 0x00, true, true);
+	BOOST_CHECK(calculated_crc == 0x40);
+
+	// Maxim iButton datasheet (DS1920)
+	uint8_t data_11_2[] = {0x10, 0x2B ,0xC5 ,0xFB ,0x00 ,0x00 ,0x00};
+	calculated_crc = calculate_crc(crc_width, data_11_2, sizeof(data_11_2), 0x31, 0x00, 0x00, true, true);
+	BOOST_CHECK(calculated_crc == 0xA0);
+
+	// Maxim iButton datasheet (DS1921G)
+	uint8_t data_11_3[] = {0x21, 0x2B, 0xC5, 0xFB, 0x00, 0x00, 0x00};
+	calculated_crc = calculate_crc(crc_width, data_11_3, sizeof(data_11_3), 0x31, 0x00, 0x00, true, true);
+	BOOST_CHECK(calculated_crc == 0x89);
+
+	/*
+	 * CRC-8/OPENSAFETY
+	 * width=8 poly=0x2f init=0x00 refin=false refout=false xorout=0x00 check=0x3e name="CRC-8/OPENSAFETY" 
+	 */
+	calculated_crc = calculate_crc(crc_width, default_data, sizeof(default_data), 0x2F, 0x00, 0x00, false, false);
+	BOOST_CHECK(calculated_crc == 0x3E);
+
+	// Ethernet POWERLINK Standardisation Group (13 March 2016)
+	uint8_t data_12_1[] = {0x23, 0xC8, 0x08, 0x34, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88};
+	calculated_crc = calculate_crc(crc_width, data_12_1, sizeof(data_12_1), 0x2F, 0x00, 0x00, false, false);
+	BOOST_CHECK(calculated_crc == 0x3C);
+
+	// openSAFETY Coommunivation using Ethernet Powerlink V2 as transport protocol (Wireshark wiki via. reveng.sourceforge.net	) Test Vector 1
+	uint8_t data_12_2[] = {0x02, 0xA8, 0x06, 0x00, 0x00, 0x60, 0x65, 0x00, 0x06, 0xA1};
+	calculated_crc = calculate_crc(crc_width, data_12_2, sizeof(data_12_2), 0x2F, 0x00, 0x00, false, false);
+	BOOST_CHECK(calculated_crc == 0x1C);
+
+	// openSAFETY Coommunivation using Ethernet Powerlink V2 as transport protocol (Wireshark wiki via. reveng.sourceforge.net	) Test Vector 2
+	uint8_t data_12_3[] = {0x03, 0xA8, 0x00, 0x01, 0x00, 0x00, 0x60, 0x65, 0x00, 0x06, 0xA1};
+	calculated_crc = calculate_crc(crc_width, data_12_3, sizeof(data_12_3), 0x2F, 0x00, 0x00, false, false);
+	BOOST_CHECK(calculated_crc == 0x31);
+
+	// openSAFETY Coommunivation using Ethernet Powerlink V2 as transport protocol (Wireshark wiki via. reveng.sourceforge.net	) Test Vector 3
+	uint8_t data_12_4[] = {0x03, 0xA8, 0x06, 0x00, 0x00, 0x60, 0x65, 0x00, 0x07, 0x21};
+	calculated_crc = calculate_crc(crc_width, data_12_4, sizeof(data_12_4), 0x2F, 0x00, 0x00, false, false);
+	BOOST_CHECK(calculated_crc == 0x1D);
+
+	/*
+	 * CRC-8/ROHC
+	 * width=8 poly=0x07 init=0xff refin=true refout=true xorout=0x00 check=0xd0 name="CRC-8/ROHC"
+	 */
+	calculated_crc = calculate_crc(crc_width, default_data, sizeof(default_data), 0x07, 0xFF, 0x00, true, true);
+	BOOST_CHECK(calculated_crc == 0xD0);
+
+	/*
+	 * CRC-8/SAE-J1850
+	 * width=8 poly=0x1d init=0xff refin=false refout=false xorout=0xff check=0x4b name="CRC-8/SAE-J1850"
+	 */
+	calculated_crc = calculate_crc(crc_width, default_data, sizeof(default_data), 0x1D, 0xFF, 0xFF, false, false);
+	BOOST_CHECK(calculated_crc == 0x4B);
+
+	// SAE Standard J1850
+	// Test Vector 1
+	uint8_t data_14_1[] = {0x00, 0x00, 0x00, 0x00};
+	calculated_crc = calculate_crc(crc_width, data_14_1, sizeof(data_14_1), 0x1D, 0xFF, 0xFF, false, false);
+	BOOST_CHECK(calculated_crc == 0x59);
+
+	// SAE Standard J1850
+	// Test Vector 2
+	uint8_t data_14_2[] = {0xF2, 0x01, 0x83};
+	calculated_crc = calculate_crc(crc_width, data_14_2, sizeof(data_14_2), 0x1D, 0xFF, 0xFF, false, false);
+	BOOST_CHECK(calculated_crc == 0x37);
+
+	// SAE Standard J1850
+	// Test Vector 3
+	uint8_t data_14_3[] = {0x0F, 0xAA, 0x00, 0x55};
+	calculated_crc = calculate_crc(crc_width, data_14_3, sizeof(data_14_3), 0x1D, 0xFF, 0xFF, false, false);
+	BOOST_CHECK(calculated_crc == 0x79);
+
+	// "knivmannen" StackOverflow (via. reveng.sourceforege.net)
+	// Test Vector 1
+	uint8_t data_14_4[] = {0x55, 0xFF, 0x00, 0x00, 0xEC, 0xFF, 0x60};
+	calculated_crc = calculate_crc(crc_width, data_14_4, sizeof(data_14_4), 0x1D, 0xFF, 0xFF, false, false);
+	BOOST_CHECK(calculated_crc == 0x1F);
+
+	/*
+	 * CRC-8/WCDMA
+	 * width=8 poly=0x9b init=0x00 refin=true refout=true xorout=0x00 check=0x25 name="CRC-8/WCDMA"
+	 */
+	calculated_crc = calculate_crc(crc_width, default_data, sizeof(default_data), 0x9B, 0x00, 0x00, true, true);
+	BOOST_CHECK(calculated_crc == 0x25);
+
+	// "Max" Computer Interfacing Forum Topic 1431 (via regeng.sourceforge.net)
+	// Test Vector 1
+	uint8_t data_15_1[] = {0x00, 0x00, 0x11};
+	calculated_crc = calculate_crc(crc_width, data_15_1, sizeof(data_15_1), 0x9B, 0x00, 0x00, true, true);
+	BOOST_CHECK(calculated_crc == 0x48);
+
+	// "Max" Computer Interfacing Forum Topic 1431 (via regeng.sourceforge.net)
+	// Test Vector 2
+	uint8_t data_15_2[] = {0x00, 0x01, 0x20};
+	calculated_crc = calculate_crc(crc_width, data_15_2, sizeof(data_15_2), 0x9B, 0x00, 0x00, true, true);
+	BOOST_CHECK(calculated_crc == 0x77);
+
+	// "Max" Computer Interfacing Forum Topic 1431 (via regeng.sourceforge.net)
+	// Test Vector 4
+	uint8_t data_15_3[] = {0x00, 0x00, 0x10, 0x21, 0x01, 0x00, 0x22, 0x00, 0x0A, 0x00, 0x2D, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x46, 0x0A};
+	calculated_crc = calculate_crc(crc_width, data_15_3, sizeof(data_15_3), 0x9B, 0x00, 0x00, true, true);
+	BOOST_CHECK(calculated_crc == 0x20);
 
 }
 
@@ -519,6 +693,31 @@ BOOST_AUTO_TEST_CASE(crcFourteen) {
 	BOOST_CHECK(calculated_crc == 0x83B);
 
 }
+
+BOOST_AUTO_TEST_CASE(crcFifteen) {
+
+#ifdef TIMER
+	boost::timer::auto_cpu_timer t;
+#endif
+
+	// 15 bit CRC's
+	uint8_t crc_width = 15;
+	uint32_t calculated_crc;
+
+	crc_t crc(crc_width);
+
+	/*
+	 * CRC-15
+	 * width=15 poly=0x4599 init=0x0000 refin=false refout=false xorout=0x0000 check=0x059e name="CRC-15" 
+	 */
+
+	// REVENG Test Check
+	calculated_crc = calculate_crc(crc_width, default_data, sizeof(default_data), 0x4599, 0x0000, 0x0000, false, false);
+	BOOST_CHECK(calculated_crc == 0x059E);
+
+
+}
+
 
 
 BOOST_AUTO_TEST_CASE(crcSixteen) {
