@@ -216,7 +216,7 @@ BOOST_AUTO_TEST_CASE(crcThirtyTwo)
 	 */
 
 	// Model of the CRC to be brute forced
-	bf_crc::crc_model_t model = {0x04c11db7, 0xffffffff, 0xffffffff, false, false};
+	bf_crc::crc_model_t model(0x04c11db7, 0xffffffff, 0xffffffff, false, false);
 
 	// REVENG Check
 	uint8_t data_0[] = {0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39};

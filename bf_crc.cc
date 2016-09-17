@@ -11,6 +11,7 @@
  *
  */
 
+#include <algorithm>
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -102,6 +103,8 @@ uint64_t bf_crc::get_delta_time_in_ms(struct timeval const& start) {
 
 void bf_crc::show_hit(crc_model_t model) {
 
+	if (quiet_) return;
+
   std::cout 
     << "----------------------------[ MATCH ]--------------------------------\n"
     << "Found a model for the CRC calculation:\n"
@@ -116,6 +119,8 @@ void bf_crc::show_hit(crc_model_t model) {
 
 void bf_crc::print_stats(void) {
   
+	if (quiet_) return;
+
   if(get_delta_time_in_ms(current_time) > 1000) {
 
     gettimeofday(&current_time, NULL);
@@ -173,7 +178,9 @@ void bf_crc::print_settings(void)
 	std::cout << std::endl << std::flush;	
 }
 
-bool bf_crc::brute_force(int thread_number, uint32_t search_poly_start, uint32_t search_poly_end, std::vector<test_vector_t> test_vectors) {
+bool bf_crc::brute_force(uint32_t search_poly_start, uint32_t search_poly_end, std::vector<test_vector_t> test_vectors) {
+
+	int stats_count = 0;
 
 	// Otherwise the returned list is going to take up a LOT of RAM
 	assert(test_vectors.size() > 0);
@@ -224,7 +231,7 @@ bool bf_crc::brute_force(int thread_number, uint32_t search_poly_start, uint32_t
 
 							mymutex.lock();
 
-							crc_model_t match = { poly, init, final_xor, int_to_bool(probe_reflected_input), int_to_bool(probe_reflected_output) };
+							crc_model_t match(poly, init, final_xor, int_to_bool(probe_reflected_input), int_to_bool(probe_reflected_output));
 							crc_model_match_.push_back(match);
 
 							if (verbose_)	
@@ -235,6 +242,9 @@ bool bf_crc::brute_force(int thread_number, uint32_t search_poly_start, uint32_t
 							mymutex.unlock();
 						}
 
+						stats_count++;
+						if (stats_count % 0x80 == 0) print_stats();
+
 						if (init == max_value(sizeof(init) * 8)) break;
 
 					} // end for loop, initials
@@ -244,7 +254,7 @@ bool bf_crc::brute_force(int thread_number, uint32_t search_poly_start, uint32_t
 					crc_counter += probe_initial_ ? max_value(crc_width_) : 1;
 
 					// TODO: is this a good way to do this?
-					if(probe_final_xor_ || (crc_counter % 0x80000 == 0))
+					if(probe_final_xor_ || (crc_counter % 0x80 == 0))
 					{
 						print_stats();
 						//std::cout << std::endl << std::hex << poly << std::dec << "\r";
@@ -301,14 +311,42 @@ int bf_crc::do_brute_force(int num_threads, std::vector<test_vector_t> test_vect
 	crc_model_match_.clear();
 
 	// TODO: Search all known CRC combinations first
+	assert(known_models.size() >= crc_width_ - 1); // Check there are enough known models...
+	for (size_t model = 0; model < known_models[crc_width_].size(); model++)
+	{
+		bf_crc *known_bf = new bf_crc(	crc_width_,
+										known_models[crc_width_][model].polynomial,
+										probe_final_xor_,
+										final_xor_,
+										probe_initial_,
+										initial_,
+										probe_reflected_input_,
+										probe_reflected_output_);
+		known_bf->set_quiet(true); // Turn off all output
+		known_bf->brute_force(known_models[crc_width_][model].polynomial,known_models[crc_width_][model].polynomial, test_vectors);
+
+		for (size_t found = 0; found < known_bf->crc_model_match().size(); found++) {
+			crc_model_t result = known_bf->crc_model_match()[found];
+
+			if (std::find(crc_model_match_.begin(), crc_model_match_.end(), result) != crc_model_match_.end()) {
+				std::cout << "Duplicate" << std::endl;
+			} else {
+				crc_model_match_.push_back(known_bf->crc_model_match()[found]);
+				std::cout << "Found" << std::endl;
+			}
+		}
+
+		delete known_bf;
+	}
+
 
 	// Step through search space, assigning a batch of polynomials to each thread 
 	// (poly_step polynomials per thread)
 	int thread_number = 0;
 	
 	// Polystep is how the search polynomials are spread betweeen threads
-	int poly_count = polynomial_end_ - polynomial_start_;
-	int poly_step = polynomial_ > 0 ? 1 : poly_count/num_threads;
+	uint32_t poly_count = polynomial_end_ - polynomial_start_;
+	uint32_t poly_step = polynomial_ > 0 ? 1 : poly_count/num_threads;
 
 	// Handle low polynomial count
 	if (poly_step == 0) poly_step = 1;
@@ -336,7 +374,7 @@ int bf_crc::do_brute_force(int num_threads, std::vector<test_vector_t> test_vect
 			std::cout << std::hex << search_start << " to " << search_end << std::endl << std::dec << std::flush;
 		}
 
-		pool.add(boost::bind(&bf_crc::brute_force, this, thread_number, search_start, search_end, test_vectors));
+		pool.add(boost::bind(&bf_crc::brute_force, this, search_start, search_end, test_vectors));
 
 	}
 
