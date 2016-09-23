@@ -109,7 +109,7 @@ BOOST_AUTO_TEST_CASE(crcFourteen)
 								true, 		// Probe Reflected Input?
 								true);		// Probe Reflected Output?
 
-	int found = crc_bruteforce->do_brute_force(4, test_vectors);
+	crc_bruteforce->do_brute_force(4, test_vectors);
 
 	BOOST_CHECK(1 == 1);
 
