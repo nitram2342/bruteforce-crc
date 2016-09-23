@@ -15,7 +15,7 @@ find_package(PkgConfig)
 #set(Boost_USE_STATIC_LIBS   ON)
 set(Boost_USE_MULTITHREADED ON)
 
-find_package(Boost REQUIRED COMPONENTS program_options system regex thread unit_test_framework)
+find_package(Boost REQUIRED COMPONENTS program_options system regex thread unit_test_framework filesystem)
 if(Boost_FOUND)
         include_directories(${Boost_INCLUDE_DIRS})
         set(LIBS ${LIBS} ${Boost_LIBRARIES}) 	

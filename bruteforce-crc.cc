@@ -26,6 +26,7 @@
 #include <boost/integer.hpp>
 #include <boost/thread.hpp>
 #include <boost/format.hpp>
+#include <boost/filesystem.hpp>
 
 #include "bruteforce-crc.hpp"
 
@@ -93,6 +94,9 @@ std::vector<bf_crc::test_vector_t> read_file(std::string const& file, int32_t of
 
 		tv.crc = crc;
 		test_vectors.push_back(tv);
+	}
+	if (verbose) {
+	  printf("Extracted %ld messages and CRC values\n", test_vectors.size());
 	}
 
 	return test_vectors;
@@ -182,12 +186,21 @@ int main(int argc, char *argv[]) {
 	if(vm.count("probe-reflected-output"))	 	reflected_output	= vm["reflect-out"].as<bool>();
 
 	// Check parameters TODO: A lot more checking
-	if(crc_width > 16) { std::cout << "maximum value for width is: 16\n"; exit(1); } // Why 16?
+	if(crc_width > 16) { 
+	  std::cout << "Maximum value for width is 16. otherwise it would be to CPU consuming, but you are free to adjust this limit." << std::endl; 
+	  exit(1); 
+	}
 
 	// Read messages from intput file
 	std::vector<bf_crc::test_vector_t> test_vectors;
  	if(vm.count("file")) {
-		test_vectors = read_file(vm["file"].as<std::string>(), start, end-start, offs_crc, crc_width, verbose);
+	  std::string const & fname = vm["file"].as<std::string>();
+	  if(!boost::filesystem::exists(fname)) {
+	    std::cout << "Can't find file '" << fname << "'." << std::endl;
+	    exit(1);
+	  }
+	  else
+	    test_vectors = read_file(fname, start, end-start, offs_crc, crc_width, verbose);
 	}
 
 	// Set output file
