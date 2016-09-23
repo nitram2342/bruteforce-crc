@@ -18,6 +18,13 @@ Dependencies
   - boost_system
   - boost_regex
   - boost_thread
+  - boost_test
+
+To install these on a Linux, you may run:
+
+$ sudo apt-get install cmake libboost-program-options-dev libboost-system-dev libboost-regex-dev \
+  libboost-thread-dev libboost-test-dev
+
 
 Compile
 --------
