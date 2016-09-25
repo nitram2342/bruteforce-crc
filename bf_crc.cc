@@ -320,7 +320,7 @@ int bf_crc::do_brute_force(int num_threads, std::vector<test_vector_t> test_vect
 		std::cout << std::endl << std::flush;
 	}
 	
-	assert(known_models.size() >= crc_width_ - 1); // Check there are enough known models...
+	assert((int)known_models.size() >= crc_width_ - 1); // Check there are enough known models...
 	for (size_t model = 0; model < known_models[crc_width_].size(); model++)
 	{
 
@@ -356,10 +356,6 @@ int bf_crc::do_brute_force(int num_threads, std::vector<test_vector_t> test_vect
 	}
 
 
-	// Step through search space, assigning a batch of polynomials to each thread 
-	// (poly_step polynomials per thread)
-	int thread_number = 0;
-	
 	// Polystep is how the search polynomials are spread betweeen threads
 	uint32_t poly_count = polynomial_end_ - polynomial_start_;
 	uint32_t poly_step = polynomial_ > 0 ? 1 : poly_count/num_threads;

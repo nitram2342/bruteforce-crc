@@ -26,6 +26,7 @@
 #include <boost/integer.hpp>
 #include <boost/thread.hpp>
 #include <boost/format.hpp>
+#include <boost/filesystem.hpp>
 
 #include "bruteforce-crc.hpp"
 
@@ -59,7 +60,7 @@ boost::dynamic_bitset<> parse_line(std::string const& line) {
  * Each line is a binary sequence with a message of length (message_length) starting at zero indexed offset (offset_message)
  * The CRC is of length (crc_length) located at zero indexed offset (offset_crc)
  */
-std::vector<bf_crc::test_vector_t> read_file(std::string const& file, int32_t offset_message, int32_t message_length, int32_t offset_crc, int32_t crc_length, bool verbose) {
+std::vector<bf_crc::test_vector_t> read_file(std::string const& file, size_t offset_message, size_t message_length, size_t offset_crc, size_t crc_length, bool verbose) {
 
 	std::vector<bf_crc::test_vector_t> test_vectors;
 	std::ifstream ifs(file.c_str());
@@ -70,17 +71,25 @@ std::vector<bf_crc::test_vector_t> read_file(std::string const& file, int32_t of
 		boost::dynamic_bitset<> msg = parse_line(current_line);
 		boost::dynamic_bitset<> resized_msg;
 
-		resized_msg.resize(message_length);
-		int32_t bit = 0;
+		if(msg.size() < message_length) {
+		  std::cout << "Warning: ignoring line from input file\n";
+		  continue;
+		}
 
-		for(int32_t i = offset_message; i < offset_message + message_length; i++) {
-			resized_msg[bit++] = msg[i];
+		resized_msg.resize(message_length);
+		size_t bit = 0;
+
+		for(size_t i = offset_message; i < offset_message + message_length; i++) {
+		  assert(i < msg.size());
+		  assert(bit < message_length);
+		  resized_msg[bit++] = msg[i];
 		}
 
 		tv.message = resized_msg;
 
 		uint32_t crc = 0;
-		for(int32_t i = 0; i < crc_length; i++) {
+		for(size_t i = 0; i < crc_length; i++) {
+		  assert(offset_crc + 1 < msg.size());
 			crc <<= 1;
 			crc |= (msg[offset_crc + i] == true ? 1 : 0);
 		}
@@ -91,6 +100,9 @@ std::vector<bf_crc::test_vector_t> read_file(std::string const& file, int32_t of
 
 		tv.crc = crc;
 		test_vectors.push_back(tv);
+	}
+	if (verbose) {
+	  printf("Extracted %ld messages and CRC values\n", test_vectors.size());
 	}
 
 	return test_vectors;
@@ -178,21 +190,27 @@ int main(int argc, char *argv[]) {
 
 	// Check parameters: A lot more checking
 	if(crc_width > 32) { std::cout << "Error: maximum value for width is 32" << std::endl; exit(1); }
-
-	// Read messages from intput file
-	std::vector<bf_crc::test_vector_t> test_vectors;
- 	if(vm.count("file")) {
-		test_vectors = read_file(vm["file"].as<std::string>(), start, end-start, offs_crc, crc_width, verbose);
-	}
-
-	// Override non-conformal input
-	if (probe_initial) initial = 0;
-
-	// Warn user when things are about to go wrong TODO: Needs to be make more cleaver...
+	
+	// Warn user when things are about to go wrong TODO: Needs to be make more cleaner...
   	if(((end-start) % 8 != 0) || (end - start == 0)) {
     	std::cout << std::endl << "Warning: input reflection only works if range start ... end is N * 8 bit with N > 0" << std::endl << std::endl; 
 		std::cout << std::flush;
 	}
+
+	// Read messages from intput file
+	std::vector<bf_crc::test_vector_t> test_vectors;
+ 	if(vm.count("file")) {
+	  std::string const & fname = vm["file"].as<std::string>();
+	  if(!boost::filesystem::exists(fname)) {
+	    std::cout << "Can't find file '" << fname << "'." << std::endl;
+	    exit(1);
+	  }
+	  else
+	    test_vectors = read_file(fname, start, end-start, offs_crc, crc_width, verbose);
+	}
+
+	// Override non-conformal input
+	if (probe_initial) initial = 0;
 
 	crc_bruteforce = new bf_crc(crc_width, 			// CRC Width
 								polynomial, 		// Polynomial
