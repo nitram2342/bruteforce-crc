@@ -191,13 +191,17 @@ bool bf_crc::brute_force(uint32_t search_poly_start, uint32_t search_poly_end, s
 	uint32_t init = 0;
 
 	// Probe reflected input
-	for(int probe_reflected_input = 0; 
-		probe_reflected_input <= bool_to_int(probe_reflected_input_); 
+	int probe_rin_start = probe_reflected_input_ ? 0 : bool_to_int(reflected_input_);
+	int probe_rin_end = probe_reflected_input_ ? 1 : bool_to_int(reflected_input_);
+	for(int probe_reflected_input = probe_rin_start; 
+		probe_reflected_input <= probe_rin_end; 
 			probe_reflected_input++) {
 
 		// Probe reflected output
-	    for(int probe_reflected_output = 0; 
-			probe_reflected_output <= bool_to_int(probe_reflected_output_); 
+		int probe_rout_start = probe_reflected_output_ ? 0 : bool_to_int(reflected_output_);
+		int probe_rout_end = probe_reflected_output_ ? 1 : bool_to_int(reflected_output_);
+	    for(int probe_reflected_output = probe_rout_start; 
+			probe_reflected_output <= probe_rout_end; 
 				probe_reflected_output++) {
 
 			// Check all possible polynomials
@@ -257,7 +261,6 @@ bool bf_crc::brute_force(uint32_t search_poly_start, uint32_t search_poly_end, s
 					if(probe_final_xor_ || (crc_counter % 0x80 == 0))
 					{
 						print_stats();
-						//std::cout << std::endl << std::hex << poly << std::dec << "\r";
 					}
 
 					mymutex.unlock();
@@ -288,8 +291,7 @@ int bf_crc::do_brute_force(int num_threads, std::vector<test_vector_t> test_vect
 	// Start a thread pool
 	ThreadPool<boost::function0<void> > pool;
 
-	if (verbose_)
-	{
+	if (verbose_) {
 		// Show the current settings
 		print_settings();
 
@@ -311,17 +313,28 @@ int bf_crc::do_brute_force(int num_threads, std::vector<test_vector_t> test_vect
 	crc_model_match_.clear();
 
 	// TODO: Search all known CRC combinations first
+	if (verbose_) {
+		std::cout << std::endl;
+		std::cout << "Testing Known CRC's for Length " << crc_width_ << std::endl;
+		std::cout << "---------------------------------" << std::endl;
+		std::cout << std::endl << std::flush;
+	}
+	
 	assert(known_models.size() >= crc_width_ - 1); // Check there are enough known models...
 	for (size_t model = 0; model < known_models[crc_width_].size(); model++)
 	{
+
 		bf_crc *known_bf = new bf_crc(	crc_width_,
 										known_models[crc_width_][model].polynomial,
-										probe_final_xor_,
-										final_xor_,
-										probe_initial_,
-										initial_,
-										probe_reflected_input_,
-										probe_reflected_output_);
+										false,
+										known_models[crc_width_][model].final_xor,
+										false,
+										known_models[crc_width_][model].initial,
+										false,
+										false);
+		known_bf->set_reflected_input(known_models[crc_width_][model].reflected_input);
+		known_bf->set_reflected_output(known_models[crc_width_][model].reflected_output);
+
 		known_bf->set_quiet(true); // Turn off all output
 		known_bf->brute_force(known_models[crc_width_][model].polynomial,known_models[crc_width_][model].polynomial, test_vectors);
 
@@ -329,14 +342,17 @@ int bf_crc::do_brute_force(int num_threads, std::vector<test_vector_t> test_vect
 			crc_model_t result = known_bf->crc_model_match()[found];
 
 			if (std::find(crc_model_match_.begin(), crc_model_match_.end(), result) != crc_model_match_.end()) {
-				std::cout << "Duplicate" << std::endl;
+				// Nothing to do if model exists already			
+					show_hit(known_bf->crc_model_match()[found]);
 			} else {
 				crc_model_match_.push_back(known_bf->crc_model_match()[found]);
-				std::cout << "Found" << std::endl;
+				if (verbose_)	
+					show_hit(known_bf->crc_model_match()[found]);
 			}
 		}
 
 		delete known_bf;
+
 	}
 
 
@@ -350,6 +366,14 @@ int bf_crc::do_brute_force(int num_threads, std::vector<test_vector_t> test_vect
 
 	// Handle low polynomial count
 	if (poly_step == 0) poly_step = 1;
+
+	if (verbose_) {
+		std::cout << std::endl;
+		std::cout << "Starting brute forcer over selected threads" << std::endl;
+		std::cout << "-------------------------------------------" << std::endl;
+		std::cout << std::endl << std::flush;
+	}
+
 
 	for(int thread_number = 0; thread_number < num_threads; thread_number++) {
 

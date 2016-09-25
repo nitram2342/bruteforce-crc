@@ -81,6 +81,8 @@ class bf_crc {
 			crc_model_match_.clear();
 			verbose_ = false;
 			quiet_ = false;
+			reflected_input_ = false;
+			reflected_output_ = false;
 
 
 			// Polulate known models from http://reveng.sourceforge.net
@@ -404,7 +406,9 @@ class bf_crc {
 		bool probe_initial_;
 		uint32_t initial_;
 		bool probe_reflected_input_;
+		bool reflected_input_;
 		bool probe_reflected_output_;
+		bool reflected_output_;
 
 		uint64_t test_vector_count_;
 		bool verbose_;
@@ -448,8 +452,12 @@ class bf_crc {
 		uint32_t initial() const { return initial_; }
 		void set_probe_reflected_input(bool var) { probe_reflected_input_ = var; update_test_vector_count(); }
 		bool probe_reflected_input() const { return probe_reflected_input_; }
+		void set_reflected_input(bool var) { reflected_input_ = var; }
+		bool relfected_input() const { return reflected_input_; }
 		void set_probe_reflected_output(bool var) { probe_reflected_output_ = var; update_test_vector_count(); }
 		bool probe_reflected_output() const { return probe_reflected_output_; }
+		void set_reflected_output(bool var) { reflected_output_ = var; }
+		bool reflected_output() const { return reflected_output_; }
 
 		uint64_t test_vector_count() const { return test_vector_count_; }
 		void set_verbose(bool var) { verbose_ = var; }

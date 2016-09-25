@@ -250,6 +250,8 @@ BOOST_AUTO_TEST_CASE(crcThirtyTwo)
 								false, 		// Probe Reflected Input?
 								false);		// Probe Reflected Output?
 	crc_bruteforce->set_verbose(true);
+	crc_bruteforce->set_polynomial_start(0x00000000);
+	crc_bruteforce->set_polynomial_end(0x10000000);
 	crc_bruteforce->do_brute_force(4, test_vectors);
 
 	// Get results
