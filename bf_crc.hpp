@@ -486,7 +486,7 @@ class bf_crc {
 			if (polynomial_ > 0) {
 				test_vector_count_ = 1;
 			} else if (polynomial_range_) {
-				test_vector_count_ = polynomial_end_ - polynomial_start_;
+				test_vector_count_ = (uint64_t)polynomial_end_ - (uint64_t)polynomial_start_;
 			} else {
 				test_vector_count_ = (uint64_t)max_value(crc_width_);
 			}
