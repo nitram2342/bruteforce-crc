@@ -76,7 +76,7 @@ sub line_to_bits {
 	$bits = $line;
 
     }
-    # process hex strings prefixed with 0x
+    # process hex strings possibly prefixed with 0x
     elsif($line =~ m!^(0x)?([\da-f]+)$!i) {
 	my $h = $2;
 	my $hlen = length($h);
