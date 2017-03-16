@@ -28,10 +28,20 @@
 
 //  Simple cyclic redundancy code (CRC) class declaration  -------------------//
 
+
 class my_crc_basic {
 
 
 public:
+
+  enum FEED_TYPE {
+    AUTO = 0,
+    LINEAR_FORWARD = 1,
+    LINEAR_REVERSED = 2,
+    BYTEWISE_REVERSED = 3
+ 
+  };
+  
   typedef uint32_t value_type;
 
   // Constructor
@@ -54,8 +64,9 @@ public:
 
   bool calc_crc(value_type const use_initial,
 		boost::dynamic_bitset<> const& msg,
-		value_type const expected_crc);
-void calc_crc(value_type const use_initia,
+		value_type const expected_crc, FEED_TYPE feed_type = AUTO);
+  
+  void calc_crc(value_type const use_initia,
 		boost::dynamic_bitset<> const& msg);
 
   value_type reflect(value_type  x ) const;
@@ -71,6 +82,7 @@ private:
   uint32_t sig_bits;
 
 };
+
 
 
 
