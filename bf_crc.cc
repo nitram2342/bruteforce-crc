@@ -85,13 +85,45 @@ std::string bf_crc::number_to_str(uint64_t v) {
   
 }
 
+std::string bitset_to_byte_array(boost::dynamic_bitset<> const & message) {
+
+  std::string ret;
+  
+  uint8_t byte = 0;
+    
+  
+  for(size_t i = 0; i < message.size(); i+=8) {
+
+    byte = 0;    
+
+    for(size_t j = 0; j < 8; j++) {
+      byte <<= 1;
+      byte |= (message[i + j] == true ? 1 : 0);
+    }
+    
+    boost::format f("0x%02x, ");
+    f % static_cast<int>(byte);
+    ret.append(f.str());
+    
+  }
+
+  boost::format f("0x%02x");
+  f % static_cast<int>(byte);
+    
+  ret.append(f.str());
+
+  return ret;
+}
+
+
 uint64_t bf_crc::get_delta_time_in_ms(struct timeval const& start) {
   struct timeval end;
   gettimeofday(&end, NULL);  
   return (end.tv_sec*1000 + end.tv_usec/1000.0) - (start.tv_sec*1000 + start.tv_usec/1000.0); 
 }
 
-void bf_crc::show_hit(uint32_t poly, uint32_t init, bool ref_in, bool ref_out, my_crc_basic::FEED_TYPE feed_type) {
+
+void bf_crc::show_hit(uint32_t poly, uint32_t init, bool ref_in, bool ref_out, my_crc_basic::FEED_TYPE feed_type, std::vector<test_vector_t> test_vectors) {
 
   std::cout 
     << "----------------------------[ MATCH ]--------------------------------" << std::endl
@@ -105,6 +137,49 @@ void bf_crc::show_hit(uint32_t poly, uint32_t init, bool ref_in, bool ref_out, m
     //<< "Message offset    : from bit " << start_ << " .. " << end_ << " (end not included)" << std::endl
     << std::endl << std::flush;
 
+  
+  // print an implementation
+  
+  if(!ref_out && !ref_in &&
+     (feed_type == my_crc_basic::BYTEWISE_REVERSED || feed_type == my_crc_basic::AUTO) &&
+     (test_vectors.size() > 0) &&
+     (test_vectors[0].message.size() % 8 == 0)) {
+    
+    std::cout 
+      << "----------------------------[ Example implementation ]--------------------------------" << std::endl
+      << "#include <stdint.h>" << std::endl
+      << "#include <stdio.h>" << std::endl
+      << std::endl
+      << "#define STANDARD_FEEDING (7-i)" << std::endl
+      << "#define BYTEWISE_REVERSE_FEEDING (i)" << std::endl
+      << "#define FEEDING " << (feed_type == my_crc_basic::BYTEWISE_REVERSED ? "BYTEWISE_REVERSE_FEEDING" : "STANDARD_FEEDING") << std::endl
+      << std::endl
+      << "uint16_t calc_crc(uint16_t poly, uint16_t initial, uint8_t * buf, unsigned int len) {" << std::endl
+      << "  uint16_t crc = initial;" << std::endl
+      << "  unsigned int i, k;" << std::endl
+      << "" << std::endl
+      << "  for(k = 0; k < len; k++ ) {" << std::endl
+      << "    for(i = 0; i < 8; i++ ) {" << std::endl
+      << "      int bit = ((buf[k] >> FEEDING & 1) == 1);" << std::endl
+      << "      int c15 = ((crc >> 15 & 1) == 1);" << std::endl
+      << "      crc <<= 1;" << std::endl
+      << "      if(c15 ^ bit) crc ^= poly;" << std::endl
+      << "    }" << std::endl
+      << "  }" << std::endl
+      << "  return crc;" << std::endl
+      << "}" << std::endl
+      << std::endl
+      << "int main(int argc, char * argv) {" << std::endl
+      << "" << std::endl
+      << "  uint8_t buf[] = { " << bitset_to_byte_array(test_vectors[0].message)<< "};" << std::endl
+      << "  uint16_t crc = " << (boost::format("0x%04x") % static_cast<int>(test_vectors[0].crc)) << ";" << std::endl
+      << "  " << std::endl
+      << "  if(calc_crc( "<< (boost::format("0x%04x") % static_cast<int>(poly)) << ", " << (boost::format("0x%04x") % static_cast<int>(init)) << ", buf, sizeof(buf)) == crc) puts(\"CRC matches\");" << std::endl
+      << "  else puts(\"CRC does not match\");" << std::endl
+      << "  " << std::endl
+      << "}" << std::endl;
+    
+  }
 }
 
 void bf_crc::print_stats(void) {
@@ -227,7 +302,7 @@ bool bf_crc::brute_force(int thread_number, uint32_t search_poly_start, uint32_t
 
 	      mymutex.lock();
 							
-	      show_hit(poly, init, probe_reflected_input ? true : false, probe_reflected_output ? true : false, feed_type_);
+	      show_hit(poly, init, probe_reflected_input ? true : false, probe_reflected_output ? true : false, feed_type_, test_vectors);
 	      crc_match_t match = { poly, init, final_xor, int_to_bool(probe_reflected_input), int_to_bool(probe_reflected_output), feed_type_ };
 	      crc_parameter_match_.push_back(match);
 	      print_stats();

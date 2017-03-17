@@ -114,7 +114,7 @@ private:
   boost::mutex mymutex;
 
   uint64_t get_delta_time_in_ms(struct timeval const& start);
-  void show_hit(uint32_t poly, uint32_t init, bool ref_in, bool ref_out, my_crc_basic::FEED_TYPE feed_type);
+  void show_hit(uint32_t poly, uint32_t init, bool ref_in, bool ref_out, my_crc_basic::FEED_TYPE feed_type, std::vector<test_vector_t> test_vectors);
   void print_stats(void);
 
   void update_test_vector_count()

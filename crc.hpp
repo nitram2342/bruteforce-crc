@@ -34,6 +34,7 @@ class my_crc_basic {
 
 public:
 
+  // The FEED_TYPE deines how bits are fed into the CRC
   enum FEED_TYPE {
     AUTO = 0,
     LINEAR_FORWARD = 1,
