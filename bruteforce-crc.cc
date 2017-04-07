@@ -146,7 +146,6 @@ int main(int argc, char *argv[]) {
   size_t start = 0;
   size_t end = offs_crc;
   
-  std::string output = "";
   bool verbose = false;
   
   int num_threads = 4;
@@ -170,7 +169,6 @@ int main(int argc, char *argv[]) {
   desc.add_options()
     ("help", "Produce help message")
     ("file", 					po::value<std::string>(), 		"File containing messages")
-    ("output", 					po::value<std::string>(), 		"Output file for matched crc settings")
     ("verbose", 				po::value<bool>(), 				"Enable verbose output")
     ("threads", 				po::value<unsigned int >(), 	"Number of threads (default: 4)")
     ("width",					po::value<size_t>(), 			"CRC width")
@@ -199,7 +197,6 @@ int main(int argc, char *argv[]) {
   }
 
   // Load inputs to local variables
-  if(vm.count("output")) output = vm["output"].as<std::string>();
   if(vm.count("verbose")) verbose  = vm["verbose"].as<bool>();
   if(vm.count("threads")) num_threads = vm["threads"].as<unsigned int>();
   if(vm.count("width")) crc_width = vm["width"].as<size_t>();
@@ -253,11 +250,6 @@ int main(int argc, char *argv[]) {
       test_vectors = read_file(fname, start, end-start, offs_crc, crc_width, verbose);
   }
   
-  // Set output file
-  if(vm.count("output")) {
-    
-  }
-
   // Override non-conformal input
   if (probe_initial) initial = 0;
 
