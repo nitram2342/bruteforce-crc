@@ -213,8 +213,8 @@ int main(int argc, char *argv[]) {
   if(vm.count("final-xor")) final_xor = vm["final-xor"].as<uint32_t>();
   if(vm.count("probe-final-xor")) probe_final_xor = vm["probe-final-xor"].as<bool>();
   if(vm.count("poly")) polynomial = vm["poly"].as<uint32_t>();
-  if(vm.count("probe-reflected-input")) probe_reflected_input = vm["probe-reflect-in"].as<bool>();
-  if(vm.count("probe-reflected-output")) probe_reflected_output = vm["probe-reflect-out"].as<bool>();
+  if(vm.count("probe-reflected-input")) probe_reflected_input = vm["probe-reflected-input"].as<bool>();
+  if(vm.count("probe-reflected-output")) probe_reflected_output = vm["probe-reflected-output"].as<bool>();
 
   if(vm.count("feed-type")) feed_type = vm["feed-type"].as<my_crc_basic::FEED_TYPE>();
   
