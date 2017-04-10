@@ -62,3 +62,8 @@ foreach(testSrc ${TEST_SRCS})
                  COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/bin/${testName} )
 
 endforeach(testSrc)
+
+
+INSTALL(FILES bruteforce-crc.1 DESTINATION man/man1)
+INSTALL(PROGRAMS bruteforce-crc DESTINATION bin)
+INSTALL(PROGRAMS rewrite-as.pl DESTINATION bin)
