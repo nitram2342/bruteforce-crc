@@ -1,0 +1,53 @@
+.TH degate 1 "April 7, 2017" "Version 0.0.2"
+.SH NAME
+bruteforce-crc \- Brute-forcing parameters of a Cycling Redundancy Check (CRC)
+.SH SYNOPSIS
+.B bruteforce-crc [options]
+.SH DESCRIPTION
+There are situations when you obtained a set of messages or commands, you can clearly identify the part that is likely a checksum and you want to derive the CRC algorithm, because you want to generate own messages with valid checksums or you want to ensure that received messages are valid. You can use bruteforce-crc to calculate the parameters of a CRC.
+.SH OPTIONS
+.IP "--help"
+Show a summary of command line options.
+.IP "--file FILENAME"
+The input file that contains messages. The file is a text file with messages specified as sequences of zeros and ones. Each line represents a single message including the CRC. The sequence of zeros and ones must start at the beginning of a line and spaces are not allowed. Each message must have the same length.
+.PP
+To transform input data to a proper format, you may use the helper script rewrite-as.pl.
+.IP "--verbose BOOL"
+Enable or disbale debug output.
+.IP --threads NUM
+Set the number of threads to bruteforce CRC parameters. Per default four threads are used.
+.IP "--width NUM"
+Specify the CRC width in bits, for example 16. The CRC width is the length of the truncated polynom.
+
+.IP "--offs-crc OFFSET"
+Specify the offset where the CRC starts. Since the input file contains bits instead of bytes, the offset should be given as a bit index.
+.IP "--start OFFSET"
+Specify the offset where the message starts. Usually the message will start at the beginning of each input file line. But you may want to alter this value, for example when your input file containts a sync sequence or message header bytes that are not part of the CRC calucaltion.
+.IP "--end OFFSET"
+Specify the offset where the message ends.
+.IP "--initial VALUE"
+A CRC register may be initialized with a certain value.
+
+.IP "--probe-initial BOOL"
+This option overrides --probe-initial.
+ 
+Bruteforce the intial value, overrides initial
+
+
+                               (default: true) --final-xor arg              Final xor (default: 0)
+  --probe-final-xor arg        Bruteforce the final-xor, overrides final-xor 
+                               (default: false)
+  --poly arg                   Truncated polynomial (default: bruteforced)
+  --probe-reflected-input arg  Probe for reflect input (default: false)
+  --probe-reflected-output arg Probe for reflect remainder output (default: 
+                               false)
+  --feed-type arg              How message bits are feeded into CRC ('auto' 
+                               (default), 'linear-forward', 'linear-reversed', 
+                               'bytewise-reversed')
+
+
+
+.SH AUTHOR
+Martin Schobert <martin@weltregierung.de>
+.SH SEE ALSO
+Project website: https://github.com/sitsec/bruteforce-crc
