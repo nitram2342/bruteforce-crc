@@ -158,7 +158,8 @@ int main(int argc, char *argv[]) {
 	// Boost program options to allow settings with call
 	po::options_description desc("Allowed options [required *]");
 	desc.add_options()
-	  ("help", 													"Produce help message")
+	  ("help,h", 													"Produce help message")
+	  ("version,v", 													"Show version information")
 	  ("file", 					po::value<std::string>(), 		"* File containing messages")
 	  ("width",					po::value<size_t>(), 			"* CRC width")
 	  ("offs-crc", 				po::value<size_t>(), 			"* CRC's offset")
@@ -175,18 +176,23 @@ int main(int argc, char *argv[]) {
 	  ("threads", 				po::value<unsigned int >(), 	"Number of threads (default: 4)")
 	  ("initial", 				po::value<size_t>(), 			"Set intial value (default: 0)")
 
-    ("probe-initial", 			po::value<bool>(), 				"Bruteforce the intial, overrides initial (default: true)")
-    ("final-xor", 				po::value<uint32_t>(), 			"Final xor (default: 0)")
-    ("probe-final-xor",			po::value<bool>(), 				"Bruteforce the final-xor, overrides final-xor (default: false)")
-    ("probe-reflected-input", 	po::value<bool>(), 				"Probe for reflect input (default: false)")
-    ("probe-reflected-output", 	po::value<bool>(), 				"Probe for reflect remainder output (default: false)")
-    ("feed-type", 	po::value<my_crc_basic::FEED_TYPE>(), 				"How message bits are feeded into CRC ('auto' (default), 'linear-forward', 'linear-reversed', 'bytewise-reversed')")
+	  ("probe-initial", 			po::value<bool>(), 				"Bruteforce the intial, overrides initial (default: true)")
+	  ("final-xor", 				po::value<uint32_t>(), 			"Final xor (default: 0)")
+	  ("probe-final-xor",			po::value<bool>(), 				"Bruteforce the final-xor, overrides final-xor (default: false)")
+	  ("probe-reflected-input", 	po::value<bool>(), 				"Probe for reflect input (default: false)")
+	  ("probe-reflected-output", 	po::value<bool>(), 				"Probe for reflect remainder output (default: false)")
+	  ("feed-type", 	po::value<my_crc_basic::FEED_TYPE>(), 				"How message bits are feed into CRC ('auto' (default), 'linear-forward', 'linear-reversed', 'bytewise-reversed')")
     ;
 
 	// Parse programm options
 	po::variables_map vm;
 	po::store(po::parse_command_line(argc, argv, desc), vm);
 	po::notify(vm); 
+	
+	if(vm.count("version")) {
+	  std::cout << argv[0] << " version " << VERSION_STR << std::endl;
+	  return 1;
+	}
 
 	// Handle call for help and non-valid call
 	if(vm.count("help") || !vm.count("file")) {

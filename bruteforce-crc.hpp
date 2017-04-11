@@ -14,5 +14,6 @@
 #ifndef _BRUTEFORCE_CRC_HPP_
 #define _BRUTEFORCE_CRC_HPP_
 
+#define VERSION_STR "0.3"
 
 #endif
