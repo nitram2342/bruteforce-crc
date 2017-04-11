@@ -53,7 +53,7 @@ Minimum input:
 
 ./bruteforce-crc --file [filename] --width [crc-width] --offs-crc [offset to start of crc] --start [start of data] --end [end of data]
 
-Input file is an ascii representation of a binary string, for example:
+Input file is an ASCII representation of a binary string, for example:
 
 <pre>
 01101100100000111010000110001101011110000000001001111111010
