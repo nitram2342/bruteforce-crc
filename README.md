@@ -86,3 +86,7 @@ Options List [* Required]:
 </pre>
 
 
+Credits
+--------
+
+* Martyn Pittuck (https://github.com/martynp) made a major rework of the code base and contributed a lot of code
