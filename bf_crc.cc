@@ -11,6 +11,7 @@
  *
  */
 
+#include <algorithm>
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -27,8 +28,6 @@
 #include "bf_crc.hpp"
 
 #include "ThreadPool.h"
-
-#define MAX_VALUE(width) (uint32_t)((1 << width) - 1)
 
 namespace po = boost::program_options;
 
@@ -85,31 +84,52 @@ std::string bf_crc::number_to_str(uint64_t v) {
   
 }
 
+boost::dynamic_bitset<> bf_crc::convert_uint8_to_bitset(const uint8_t array[], size_t size) {
+
+	boost::dynamic_bitset<> retVal(size*8);
+
+	for (unsigned int i = 0; i < size; i++)
+		for (int j = 0; j < 8; j++)
+			retVal[i*8+j] = (array[i] >> (7-j)) & 0x1 ? true : false;
+
+	return retVal;
+}
+
+boost::dynamic_bitset<> bf_crc::convert_string_to_bitset(std::string str)
+{
+	boost::dynamic_bitset<> retVal(str.length());
+
+	for (size_t i = 0; i < str.length(); i++)
+		retVal[i] = str[i] == '1' ? true : false;
+
+	return retVal;
+}
+
 std::string bitset_to_byte_array(boost::dynamic_bitset<> const & message) {
 
   std::string ret;
-  
+
   uint8_t byte = 0;
-    
-  
+
+
   for(size_t i = 0; i < message.size(); i+=8) {
 
-    byte = 0;    
+    byte = 0;
 
     for(size_t j = 0; j < 8; j++) {
       byte <<= 1;
       byte |= (message[i + j] == true ? 1 : 0);
     }
-    
+
     boost::format f("0x%02x, ");
     f % static_cast<int>(byte);
     ret.append(f.str());
-    
+
   }
 
   boost::format f("0x%02x");
   f % static_cast<int>(byte);
-    
+
   ret.append(f.str());
 
   return ret;
@@ -123,25 +143,27 @@ uint64_t bf_crc::get_delta_time_in_ms(struct timeval const& start) {
 }
 
 
-void bf_crc::show_hit(uint32_t poly, uint32_t init, bool ref_in, bool ref_out, my_crc_basic::FEED_TYPE feed_type, std::vector<test_vector_t> test_vectors) {
+void bf_crc::show_hit(crc_model_t model, std::vector<test_vector_t> test_vectors) {
+
+  if (quiet_) return;
+
 
   std::cout 
-    << "----------------------------[ MATCH ]--------------------------------" << std::endl
-    << "Found a model for the CRC calculation:" << std::endl
-    << "Truncated polynom : 0x" << std::hex << poly << " (" << std::dec << poly << ")" << std::endl
-    << "Initial value     : 0x" << std::hex << init << " (" << std::dec << init << ")" << std::endl
-    << "Final XOR         : 0x" << std::hex << final_xor_ << " (" << std::dec << final_xor_ << ")" << std::endl
-    << "Reflected input   : " << bool_to_str(ref_in) << std::endl
-    << "Reflected output  : " << bool_to_str(ref_out) << std::endl
-    << "Feed type         : " << feed_type_to_str(feed_type) << std::endl
-    //<< "Message offset    : from bit " << start_ << " .. " << end_ << " (end not included)" << std::endl
+    << "----------------------------[ MATCH ]--------------------------------\n"
+    << "Found a model for the CRC calculation:\n"
+    << "Truncated polynom : 0x" << std::hex << model.polynomial << " (" << std::dec << model.polynomial << ")\n"
+    << "Initial value     : 0x" << std::hex << model.initial << " (" << std::dec << model.initial << ")\n"
+    << "Final XOR         : 0x" << std::hex << model.final_xor << " (" << std::dec << model.final_xor << ")\n"
+    << "Reflected input   : " << bool_to_str(model.reflected_input) << "\n"
+    << "Reflected output  : " << bool_to_str(model.reflected_output) << "\n"
+    << "Feed type         : " << feed_type_to_str(model.feed_type) << std::endl
     << std::endl << std::flush;
 
   
   // print an implementation
   
-  if(!ref_out && !ref_in &&
-     (feed_type == my_crc_basic::BYTEWISE_REVERSED || feed_type == my_crc_basic::AUTO) &&
+  if(!model.reflected_output && !model.reflected_input &&
+     (model.feed_type == my_crc_basic::BYTEWISE_REVERSED || model.feed_type == my_crc_basic::AUTO) &&
      (test_vectors.size() > 0) &&
      (test_vectors[0].message.size() % 8 == 0)) {
     
@@ -152,7 +174,7 @@ void bf_crc::show_hit(uint32_t poly, uint32_t init, bool ref_in, bool ref_out, m
       << std::endl
       << "#define STANDARD_FEEDING (7-i)" << std::endl
       << "#define BYTEWISE_REVERSE_FEEDING (i)" << std::endl
-      << "#define FEEDING " << (feed_type == my_crc_basic::BYTEWISE_REVERSED ? "BYTEWISE_REVERSE_FEEDING" : "STANDARD_FEEDING") << std::endl
+      << "#define FEEDING " << (model.feed_type == my_crc_basic::BYTEWISE_REVERSED ? "BYTEWISE_REVERSE_FEEDING" : "STANDARD_FEEDING") << std::endl
       << std::endl
       << "uint16_t calc_crc(uint16_t poly, uint16_t initial, uint8_t * buf, unsigned int len) {" << std::endl
       << "  uint16_t crc = initial;" << std::endl
@@ -171,10 +193,10 @@ void bf_crc::show_hit(uint32_t poly, uint32_t init, bool ref_in, bool ref_out, m
       << std::endl
       << "int main(int argc, char * argv) {" << std::endl
       << "" << std::endl
-      << "  uint8_t buf[] = { " << bitset_to_byte_array(test_vectors[0].message)<< "};" << std::endl
+      << "  uint8_t buf[] = { " << bitset_to_byte_array(test_vectors[0].message) << "};" << std::endl
       << "  uint16_t crc = " << (boost::format("0x%04x") % static_cast<int>(test_vectors[0].crc)) << ";" << std::endl
       << "  " << std::endl
-      << "  if(calc_crc( "<< (boost::format("0x%04x") % static_cast<int>(poly)) << ", " << (boost::format("0x%04x") % static_cast<int>(init)) << ", buf, sizeof(buf)) == crc) puts(\"CRC matches\");" << std::endl
+      << "  if(calc_crc( "<< (boost::format("0x%04x") % static_cast<int>(model.polynomial)) << ", " << (boost::format("0x%04x") % static_cast<int>(model.initial)) << ", buf, sizeof(buf)) == crc) puts(\"CRC matches\");" << std::endl
       << "  else puts(\"CRC does not match\");" << std::endl
       << "  " << std::endl
       << "}" << std::endl;
@@ -184,6 +206,8 @@ void bf_crc::show_hit(uint32_t poly, uint32_t init, bool ref_in, bool ref_out, m
 
 void bf_crc::print_stats(void) {
   
+	if (quiet_) return;
+
   if(get_delta_time_in_ms(current_time) > 1000) {
 
     gettimeofday(&current_time, NULL);
@@ -191,17 +215,22 @@ void bf_crc::print_stats(void) {
 
     if(elapsed_ms > 0) {
       uint64_t crcs_per_sec = (1000*crc_counter/elapsed_ms);
+
       std::cout << "\rtime=" << (elapsed_ms/1000) << "s "
-		<< "CRCs/s=" <<  crcs_per_sec
-		<< " done=" << (crc_counter*100.0/test_vector_count()) << "%"
+		<< "CRCs/s=" <<  crcs_per_sec;
+
+	if (crcs_per_sec > 0)
+{
+	std::cout << " done=" << (crc_counter*100.0/test_vector_count()) << "%"
 		<< " (" << number_to_str(crc_counter) << " of " << number_to_str(test_vector_count()) << ")"
-		<< " time_to_go=" <<  (test_vector_count() - crc_counter)/crcs_per_sec/3600 << " h"
-		<< "     \r" << std::flush;
+		<< " time_to_go=" <<  (test_vector_count() - crc_counter)/crcs_per_sec/3600 << " h";
+}
+
+		std::cout << "     \r" << std::flush;
     }
   }
 
 }
-
 
 
 void bf_crc::print_settings(void)
@@ -219,37 +248,34 @@ void bf_crc::print_settings(void)
   else
     std::cout << ": 0x0 to 0x" << std::hex << MAX_VALUE(crc_width_) << std::endl;
 
-  if (probe_initial_)
-    std::cout << "Initial value		: 0x0 to 0x" << std::hex << MAX_VALUE(crc_width_) << std::endl;
-  else
-    std::cout << "Initial value		: " << std::hex << initial_ << std::endl;
 
-  if (probe_final_xor_)
-    std::cout << "Final xor		: 0x0 to 0x" << std::hex << MAX_VALUE(crc_width_) << std::endl;
-  else
-    std::cout << "Final xor		: 0x" <<std::hex << final_xor_ << std::endl;
+  std::cout << "Truncated Polynomial	";
+	if (polynomial_ > 0)
+		std::cout << ": 0x" << std::hex << polynomial_ << std::dec << std::endl;
+	else
+		std::cout << ": 0x" << std::hex << polynomial_start_ << " to 0x" << std::hex << polynomial_end_ << std::dec << std::endl;
 
-  std::cout << "Probe reflect in	: " << bool_to_str(probe_reflected_input_) << std::endl;
-  std::cout << "Probe reflect out	: " << bool_to_str(probe_reflected_output_) << std::endl;
+	if (probe_initial_)
+		std::cout << "Initial value		: 0x0 to 0x" << std::hex << max_value(crc_width_) << std::dec << std::endl;
+	else
+		std::cout << "Initial value		: 0x" << std::hex << initial_ << std::dec << std::endl;
 
-  std::cout << "Feed type               : " << feed_type_to_str(feed_type_) << std::endl;
-  
-  std::cout << std::endl << std::flush;	
+	if (probe_final_xor_)
+		std::cout << "Final xor		: 0x0 to 0x" << std::hex << max_value(crc_width_) << std::dec << std::endl;
+	else
+		std::cout << "final xor		: 0x" <<std::hex << final_xor_ << std::dec << std::endl;
+
+	std::cout << "Probe reflect in	: " << bool_to_str(probe_reflected_input_) << std::endl;
+	std::cout << "Probe reflect out	: " << bool_to_str(probe_reflected_output_) << std::endl;
+	std::cout << "Feed type               : " << feed_type_to_str(feed_type_) << std::endl;
+
+	std::cout << "Permutation count	: " << test_vector_count_ << std::endl;
+	std::cout << std::endl << std::flush;	
 }
 
-bool bf_crc::brute_force(int thread_number, uint32_t search_poly_start, uint32_t search_poly_end, std::vector<test_vector_t> test_vectors) {
+bool bf_crc::brute_force(uint32_t search_poly_start, uint32_t search_poly_end, std::vector<test_vector_t> test_vectors) {
 
-  // Verbose option only
-  if (verbose_)
-    {
-      // Lock mutex to avoid garbled std_out
-      mymutex.lock();
-
-      // Thread information
-      //		std::cout << "Thread " << thread_number << " started, searching polynomial " << std::hex << search_poly_start << " to " << std::hex << search_poly_end << std::endl;
-
-      mymutex.unlock();
-    }
+	int stats_count = 0;
 
   // Otherwise the returned list is going to take up a LOT of RAM
   assert(test_vectors.size() > 0);
@@ -260,74 +286,89 @@ bool bf_crc::brute_force(int thread_number, uint32_t search_poly_start, uint32_t
   // Initial value defaults to 0
   uint32_t init = 0;
 
-  // If init search is requested, set the search space
-  uint32_t init_to_check = probe_initial_ ? MAX_VALUE(crc_width_) : 0;
+	// Probe reflected input
+	int probe_rin_start = probe_reflected_input_ ? 0 : bool_to_int(reflected_input_);
+	int probe_rin_end = probe_reflected_input_ ? 1 : bool_to_int(reflected_input_);
+	for(int probe_reflected_input = probe_rin_start; 
+		probe_reflected_input <= probe_rin_end; 
+			probe_reflected_input++) {
 
-  // Probe reflected input
-  for(int probe_reflected_input = 0; 
-      probe_reflected_input <= bool_to_int(probe_reflected_input_); 
-      probe_reflected_input++) {
+		// Probe reflected output
+		int probe_rout_start = probe_reflected_output_ ? 0 : bool_to_int(reflected_output_);
+		int probe_rout_end = probe_reflected_output_ ? 1 : bool_to_int(reflected_output_);
+	    for(int probe_reflected_output = probe_rout_start; 
+			probe_reflected_output <= probe_rout_end; 
+				probe_reflected_output++) {
 
-    // Probe reflected output
-    for(int probe_reflected_output = 0; 
-	probe_reflected_output <= bool_to_int(probe_reflected_output_); 
-	probe_reflected_output++) {
+			// Check all possible polynomials
+			for(uint32_t poly = search_poly_start; 
+				poly <= search_poly_end; 
+					poly++) {
 
-      // Check all possible polynomials
-      for(uint32_t poly = search_poly_start; 
-	  poly <= search_poly_end && poly <= MAX_VALUE(crc_width_); 
-	  poly++) {
-
-	// Probe all final xors
-	for(uint32_t final_xor = (probe_final_xor_ ? 0 : final_xor_); 
-	    final_xor <= (probe_final_xor_ ? MAX_VALUE(crc_width_) : final_xor_); 
-	    final_xor++) {
+				// Probe all final xors
+				for(uint32_t final_xor = (probe_final_xor_ ? 0 : final_xor_); 
+					final_xor <= (probe_final_xor_ ? max_value(crc_width_) : final_xor_); 
+						final_xor++) {
 
 	  // Set the CRC engine settings (initial set to zero, igored)
 	  crc.set(poly, 0, final_xor, int_to_bool(probe_reflected_input), int_to_bool(probe_reflected_output));
 
-	  // For all possible initials
-	  for(init = 0; init <= init_to_check; init++) {
+					// For all possible initials
+					for(init = (probe_initial_ ? 0 : initial_); 
+						init <= (probe_initial_ ? max_value(crc_width_) : initial_); 
+							init++) {
 
 	    // Start with true
 	    bool match = true;
 	    size_t m_i;
 
-	    // Over all test vectors, test to see if CRC settings wor
-	    for(m_i = 0; match && (m_i < test_vectors.size()); m_i++)
-	      match = crc.calc_crc(init, test_vectors[m_i].message, test_vectors[m_i].crc, feed_type_);
+						// Over all test vectors, test to see if CRC settings work
+						for(m_i = 0; match && (m_i < test_vectors.size()); m_i++)
+						  match = crc.calc_crc(init, test_vectors[m_i].message, test_vectors[m_i].crc, feed_type_);
 
-	    // If match is true there were no errors, TODO: why checl m_i against test_vectors_size?
-	    if(match == true && m_i == test_vectors.size()) {
+						// If match is true there were no errors
+						if(match == true && m_i == test_vectors.size()) {
 
-	      mymutex.lock();
-							
-	      show_hit(poly, init, probe_reflected_input ? true : false, probe_reflected_output ? true : false, feed_type_, test_vectors);
-	      crc_match_t match = { poly, init, final_xor, int_to_bool(probe_reflected_input), int_to_bool(probe_reflected_output), feed_type_ };
-	      crc_parameter_match_.push_back(match);
-	      print_stats();
+							mymutex.lock();
+
+							crc_model_t match(poly, init, final_xor, int_to_bool(probe_reflected_input), int_to_bool(probe_reflected_output), feed_type_ );
+							crc_model_match_.push_back(match);
+
+							if (verbose_)	
+							  show_hit(match, test_vectors);
+
+							print_stats();
 
 	      mymutex.unlock();
 	    }
 
-	  } // end for loop, initials
+						stats_count++;
+						if (stats_count % 0x80 == 0) print_stats();
 
-	  // Lock the mutex, blocks until mutex avaliable
-	  mymutex.lock();
+						if (init == max_value(sizeof(init) * 8)) break;
 
-	  // Increase counter by initial's being checkeD 
-	  crc_counter += init_to_check;
+					} // end for loop, initials
 
-	  // TODO: is this a good way to do this?
-	  if(probe_final_xor_ || (poly % 0x80 == 0))
-	    print_stats();
+					mymutex.lock();
 
-	  // Unlock the mutex
-	  mymutex.unlock();
+					crc_counter += probe_initial_ ? max_value(crc_width_) : 1;
 
-	} // end for loop, final_xor
+					// TODO: is this a good way to do this?
+					if(probe_final_xor_ || (crc_counter % 0x80 == 0))
+					{
+						print_stats();
+					}
 
-      } // end for loop, polynomial
+					mymutex.unlock();
+
+					// Handle overflow of for loop
+					if (final_xor == max_value(sizeof(final_xor) * 8)) break;
+
+				} // end for loop, final_xor
+
+				if (poly == max_value(sizeof(poly) * 8)) break;
+
+			} // end for loop, polynomial
 
     } // end for loop, reflected output
 
@@ -346,41 +387,119 @@ int bf_crc::do_brute_force(int num_threads, std::vector<test_vector_t> test_vect
   // Start a thread pool
   ThreadPool<boost::function0<void> > pool;
 
-  // Polystep is how the search polynomials are spread betweeen threads
-  int poly_step = polynomial_ > 0 ? 1 : MAX_VALUE(crc_width_)/num_threads;
+	if (verbose_) {
+		// Show the current settings
+		print_settings();
 
-  if (verbose_)
-    {
-      std::cout << std::endl;
-      std::cout << "Multithreaded CRC Brute Force Initiated" << std::endl;
-      std::cout << "---------------------------------------" << std::endl;
-      std::cout << "Number of threads	: " << std::dec << num_threads << std::endl;
-      std::cout << "Number of test vectors	: " << std::dec << test_vectors.size() << std::endl;
-      std::cout << std::endl << std::flush;
-    }
+		// And this specific run's settings
+		std::cout << std::endl;
+		std::cout << "Multithreaded CRC Brute Force Initiated" << std::endl;
+		std::cout << "---------------------------------------" << std::endl;
+		std::cout << "Number of threads	: " << std::dec << num_threads << std::endl;
+		std::cout << "Number of test vectors	: " << std::dec << test_vectors.size() << std::endl;
+		std::cout << std::endl << std::flush;
+	}
 
-  // Clear the result store
-  crc_parameter_match_.clear();
+	// TODO: If you know the poly...
+	if (polynomial_ > 0) {
+		num_threads = 1;
+	}
 
-  // Step through search space, assigning a batch of polynomials to each thread 
-  // (poly_step polynomials per thread)
-  int thread_number = 0;
-  for(uint32_t _poly = 0; _poly <= MAX_VALUE(crc_width_); _poly += poly_step + 1) {
+	// Clear the result store
+	crc_model_match_.clear();
 
-    // Limit end poly size, rounding could cause problems with odd number of processors
-    uint32_t end_poly = _poly + poly_step - 1;
-    if (end_poly > MAX_VALUE(crc_width_)) end_poly = MAX_VALUE(crc_width_);
+	// TODO: Search all known CRC combinations first
+	if (verbose_) {
+		std::cout << std::endl;
+		std::cout << "Testing Known CRC's for Length " << crc_width_ << std::endl;
+		std::cout << "---------------------------------" << std::endl;
+		std::cout << std::endl << std::flush;
+	}
+	
+	assert((int)known_models.size() >= crc_width_ - 1); // Check there are enough known models...
+	for (size_t model = 0; model < known_models[crc_width_].size(); model++)
+	{
 
-    // Start the thread
-    pool.add(boost::bind(&bf_crc::brute_force, this,
-			 thread_number++, _poly, _poly + poly_step, test_vectors));
+		bf_crc *known_bf = new bf_crc(	crc_width_,
+										known_models[crc_width_][model].polynomial,
+										false,
+										known_models[crc_width_][model].final_xor,
+										false,
+										known_models[crc_width_][model].initial,
+										false,
+						false, my_crc_basic::AUTO);
+		known_bf->set_reflected_input(known_models[crc_width_][model].reflected_input);
+		known_bf->set_reflected_output(known_models[crc_width_][model].reflected_output);
+
+		known_bf->set_quiet(true); // Turn off all output
+		known_bf->brute_force(known_models[crc_width_][model].polynomial,known_models[crc_width_][model].polynomial, test_vectors);
+
+		for (size_t found = 0; found < known_bf->crc_model_match().size(); found++) {
+			crc_model_t result = known_bf->crc_model_match()[found];
+
+			if (std::find(crc_model_match_.begin(), crc_model_match_.end(), result) != crc_model_match_.end()) {
+				// Nothing to do if model exists already			
+			  show_hit(known_bf->crc_model_match()[found], test_vectors);
+			} else {
+				crc_model_match_.push_back(known_bf->crc_model_match()[found]);
+				if (verbose_)	
+					show_hit(known_bf->crc_model_match()[found], test_vectors);
+			}
+		}
+
+		delete known_bf;
+
+	}
+
+
+	// Polystep is how the search polynomials are spread betweeen threads
+	uint32_t poly_count = polynomial_end_ - polynomial_start_;
+	uint32_t poly_step = polynomial_ > 0 ? 1 : poly_count/num_threads;
+
+	// Handle low polynomial count
+	if (poly_step == 0) poly_step = 1;
+
+	if (verbose_) {
+		std::cout << std::endl;
+		std::cout << "Starting brute forcer over selected threads" << std::endl;
+		std::cout << "-------------------------------------------" << std::endl;
+		std::cout << std::endl << std::flush;
+	}
+
+
+	for(int thread_number = 0; thread_number < num_threads; thread_number++) {
+
+		uint32_t search_end = 0;
+		if (polynomial_ > 0)
+			search_end = polynomial_;
+		else
+			search_end = polynomial_start_ + (thread_number + 1) * poly_step - 1;
+
+		// Due to math the last caluclate will wrap to zero?
+		if (thread_number == num_threads-1 && polynomial_ == 0)
+			search_end = polynomial_end_;
+
+		uint32_t search_start = 0;
+		if (polynomial_ > 0) 
+			search_start = polynomial_;
+		else
+			search_start = polynomial_start_ + thread_number * poly_step;
+
+		if (verbose_) {
+			std::cout << "Starting Thread " << thread_number << ", searching from ";
+			std::cout << std::hex << search_start << " to " << search_end << std::endl << std::dec << std::flush;
+		}
+
+		pool.add(boost::bind(&bf_crc::brute_force, this, search_start, search_end, test_vectors));
 
   }
 
-  // Wait for all threads to complete
-  pool.wait();
+	if (verbose_)
+		std::cout << std::endl << std::flush; 
 
-  return crc_parameter_match_.size();
+	// Wait for all threads to complete
+	pool.wait();
 
+	return crc_model_match_.size();
 }
 

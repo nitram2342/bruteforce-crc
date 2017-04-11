@@ -10,8 +10,6 @@
 #include <boost/program_options.hpp>
 #include "crc.hpp"
 
-#define MAX_VALUE(width) ((1 << width) - 1)
-
 namespace po = boost::program_options;
 
 typedef my_crc_basic crc_t;

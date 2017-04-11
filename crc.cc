@@ -114,6 +114,19 @@ bool my_crc_basic::calc_crc(value_type const use_initial,
 }
 
 
+bool my_crc_basic::calc_crc(value_type const use_initial,
+			    uint8_t msg[], size_t msg_length,
+			    value_type const expected_crc) {
+  
+	reset(use_initial);	
+
+	//process_bytes(msg, msg_length);
+
+	return checksum() == expected_crc;
+
+}
+
+
 
 // Function that reflects its argument
 my_crc_basic::value_type my_crc_basic::reflect(value_type  x ) const {

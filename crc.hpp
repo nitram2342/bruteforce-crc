@@ -26,6 +26,9 @@
 
 #include <boost/crc.hpp>
 
+#define MAX_VALUE(width) ((1 << width) - 1)
+
+
 //  Simple cyclic redundancy code (CRC) class declaration  -------------------//
 
 
@@ -56,8 +59,8 @@ public:
   void set( value_type truncated_polynominal,
 	    value_type initial_remainder = 0, 
 	    value_type final_xor_value = 0,
-	    bool reflect_input = false, bool 
-	    reflect_remainder = false );
+	    bool reflect_input = false,
+	    bool reflect_remainder = false);
 
   void reset( value_type new_rem );
   void process_bit( bool bit );
@@ -69,6 +72,10 @@ public:
   
   void calc_crc(value_type const use_initia,
 		boost::dynamic_bitset<> const& msg);
+
+  bool calc_crc(value_type const use_initial,
+		uint8_t msg[], size_t msg_length,
+		value_type const expected_crc);
 
   value_type reflect(value_type  x ) const;
 
