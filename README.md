@@ -37,6 +37,15 @@ Build bruteforce-crc and ./bin/test*
 
 Run tests (can take a long time) 
 
+
+Install
+-------
+
+in general, you may use the bruteforcer from the directory where you compiled the code. If you like to install the bruteforcer into your system, you may run the 'install' target:
+
+\> sudo make install
+
+
 Run
 ----
 
@@ -62,7 +71,7 @@ In this example the CRC is 10 bits long and starts at bit 49:
 The command line for this example would be:
 
 <pre>
-./buteforce-crc --file data.txt --width=10 --offs-crc 49 --start 0 --end 49
+./buteforce-crc --file data.txt --width 10 --offs-crc 49 --start 0 --end 49
 
 Options List [* Required]:
 
