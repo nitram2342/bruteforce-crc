@@ -61,7 +61,14 @@ Input file is an ASCII representation of a binary string, for example:
 11010111001110001101101100101110111101101010010010011100111
 </pre>
 
-In this example the CRC is 10 bits long and starts at bit 49:
+If your input is hex-bytes, just use the Perl script "rewrite-as.pl" to convert your input into a format the bruteforcer expects, for example:
+
+<pre>
+perl rewrite-as.pl bits test_hexbytes.txt > test_bitmsg.txt
+</pre>
+
+
+Back to the example, in this example the CRC is 10 bits long and starts at bit 49:
 
 <pre>
 [--------------------data-----------------------][---CRC--]
