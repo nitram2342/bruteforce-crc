@@ -110,9 +110,19 @@ std::string bitset_to_byte_array(boost::dynamic_bitset<> const & message) {
   std::string ret;
 
   uint8_t byte = 0;
+  
+  // for the first byte
+  for(size_t j = 0; j < 8; j++) {
+    byte <<= 1;
+    byte |= (message[j] == true ? 1 : 0); 
+  }
 
+  boost::format f("0x%02x");
+  f % static_cast<int>(byte);
+  ret.append(f.str());
 
-  for(size_t i = 0; i < message.size(); i+=8) {
+  // for all subsequent bytes
+  for(size_t i = 8; i < message.size(); i+=8) {
 
     byte = 0;
 
@@ -121,16 +131,11 @@ std::string bitset_to_byte_array(boost::dynamic_bitset<> const & message) {
       byte |= (message[i + j] == true ? 1 : 0);
     }
 
-    boost::format f("0x%02x, ");
+    boost::format f(", 0x%02x");
     f % static_cast<int>(byte);
     ret.append(f.str());
 
   }
-
-  boost::format f("0x%02x");
-  f % static_cast<int>(byte);
-
-  ret.append(f.str());
 
   return ret;
 }
