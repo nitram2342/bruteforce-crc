@@ -146,7 +146,7 @@ int main(int argc, char *argv[]) {
 	bool reflected_output = false;
 
 	uint32_t initial = 0;
-	bool probe_initial = true;
+	bool probe_initial = false;
 
 	uint32_t final_xor = 0;
 	bool probe_final_xor = false;
@@ -174,7 +174,7 @@ int main(int argc, char *argv[]) {
 	  ("poly-end",				po::value<uint32_t>(),			"End of polynomial search space (default (2^width - 1))")
 	  
 	  ("threads", 				po::value<unsigned int >(), 	"Number of threads (default: 4)")
-	  ("initial", 				po::value<size_t>(), 			"Set intial value (default: 0)")
+	  ("initial", 				po::value<uint32_t>(), 			"Set intial value (default: 0)")
 
 	  ("probe-initial", 			po::value<bool>(), 				"Bruteforce the intial, overrides initial (default: true)")
 	  ("final-xor", 				po::value<uint32_t>(), 			"Final xor (default: 0)")
