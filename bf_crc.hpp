@@ -488,6 +488,7 @@ class bf_crc {
 
 		uint64_t get_delta_time_in_ms(struct timeval const& start);
   void show_hit(crc_model_t model, std::vector<test_vector_t> test_vectors);
+  std::string show_reflect_output (void);
 		void print_stats(void);
   std::string feed_type_to_str(my_crc_basic::FEED_TYPE feed_type);
 
