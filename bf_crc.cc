@@ -147,6 +147,18 @@ uint64_t bf_crc::get_delta_time_in_ms(struct timeval const& start) {
   return (end.tv_sec*1000 + end.tv_usec/1000.0) - (start.tv_sec*1000 + start.tv_usec/1000.0); 
 }
 
+std::string bf_crc::show_reflect_output (void) {
+    return 	"uint32_t reflect_output(uint32_t  x ) {\n"
+        "  uint32_t reflection = 0;\n"
+        "  uint32_t const  one = 1;\n"
+        "  uint32_t width_ = 16;\n"
+        "  for( uint32_t i = 0 ; i < width_ ; ++i, x >>= 1 ) {\n"
+        "    if ( x & one )\n"
+        "      reflection |= ( one << (width_ - 1u - i) );\n"
+        "  }\n"
+        "  return reflection;\n"
+        "}\n";
+}
 
 void bf_crc::show_hit(crc_model_t model, std::vector<test_vector_t> test_vectors) {
 
@@ -167,8 +179,7 @@ void bf_crc::show_hit(crc_model_t model, std::vector<test_vector_t> test_vectors
   
   // print an implementation
   
-  if(!model.reflected_output && !model.reflected_input &&
-     (model.feed_type == my_crc_basic::BYTEWISE_REVERSED || model.feed_type == my_crc_basic::AUTO) &&
+  if((model.feed_type == my_crc_basic::BYTEWISE_REVERSED || model.feed_type == my_crc_basic::AUTO) &&
      (test_vectors.size() > 0) &&
      (test_vectors[0].message.size() % 8 == 0)) {
     
@@ -179,9 +190,10 @@ void bf_crc::show_hit(crc_model_t model, std::vector<test_vector_t> test_vectors
       << std::endl
       << "#define STANDARD_FEEDING (7-i)" << std::endl
       << "#define BYTEWISE_REVERSE_FEEDING (i)" << std::endl
-      << "#define FEEDING " << (model.feed_type == my_crc_basic::BYTEWISE_REVERSED ? "BYTEWISE_REVERSE_FEEDING" : "STANDARD_FEEDING") << std::endl
+      << "#define FEEDING " << (model.reflected_input == true ? "BYTEWISE_REVERSE_FEEDING" : "STANDARD_FEEDING") << std::endl
       << std::endl
-      << "uint16_t calc_crc(uint16_t poly, uint16_t initial, uint8_t * buf, unsigned int len) {" << std::endl
+      << (model.reflected_output == true ? show_reflect_output() : std::string("")) << std::endl
+      << "uint16_t calc_crc(uint16_t poly, uint16_t initial, uint16_t final_xor, uint8_t * buf, unsigned int len) {" << std::endl
       << "  uint16_t crc = initial;" << std::endl
       << "  unsigned int i, k;" << std::endl
       << "" << std::endl
@@ -193,6 +205,8 @@ void bf_crc::show_hit(crc_model_t model, std::vector<test_vector_t> test_vectors
       << "      if(c15 ^ bit) crc ^= poly;" << std::endl
       << "    }" << std::endl
       << "  }" << std::endl
+      << (model.reflected_output == true ? "  crc = reflect_output(crc);" : "") << std::endl
+      << "  crc ^= final_xor;" << std::endl
       << "  return crc;" << std::endl
       << "}" << std::endl
       << std::endl
@@ -201,7 +215,9 @@ void bf_crc::show_hit(crc_model_t model, std::vector<test_vector_t> test_vectors
       << "  uint8_t buf[] = { " << bitset_to_byte_array(test_vectors[0].message) << "};" << std::endl
       << "  uint16_t crc = " << (boost::format("0x%04x") % static_cast<int>(test_vectors[0].crc)) << ";" << std::endl
       << "  " << std::endl
-      << "  if(calc_crc( "<< (boost::format("0x%04x") % static_cast<int>(model.polynomial)) << ", " << (boost::format("0x%04x") % static_cast<int>(model.initial)) << ", buf, sizeof(buf)) == crc) puts(\"CRC matches\");" << std::endl
+      << "  if(calc_crc( "<< (boost::format("0x%04x") % static_cast<int>(model.polynomial)) << ", " 
+      << (boost::format("0x%04x") % static_cast<int>(model.initial)) << ", " 
+      << (boost::format("0x%04x") % static_cast<int>(model.final_xor)) << ", buf, sizeof(buf)) == crc) puts(\"CRC matches\");" << std::endl
       << "  else puts(\"CRC does not match\");" << std::endl
       << "  " << std::endl
       << "}" << std::endl;
