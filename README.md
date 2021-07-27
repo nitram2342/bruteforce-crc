@@ -78,7 +78,7 @@ Back to the example, in this example the CRC is 10 bits long and starts at bit 4
 The command line for this example would be:
 
 <pre>
-./buteforce-crc --file data.txt --width 10 --offs-crc 49 --start 0 --end 49
+./bruteforce-crc --verbose 1 --file data.txt --start 0 --end 49 --width 10 --offs-crc 49 --probe-initial true
 
 Options List [* Required]:
 
