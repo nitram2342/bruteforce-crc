@@ -51,7 +51,9 @@ Run
 
 Minimum input:
 
+<pre>
 ./bruteforce-crc --file [filename] --width [crc-width] --offs-crc [offset to start of crc] --start [start of data] --end [end of data]
+</pre>
 
 Input file is an ASCII representation of a binary string, for example:
 
@@ -67,6 +69,7 @@ If your input is hex-bytes, just use the Perl script "rewrite-as.pl" to convert 
 perl rewrite-as.pl bits test_hexbytes.txt > test_bitmsg.txt
 </pre>
 
+The brute-forcer expects simple newlines as line endings. If you have Windows text files ending in \r\n, you need to convert them.
 
 Back to the example, in this example the CRC is 10 bits long and starts at bit 49:
 
